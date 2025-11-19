@@ -216,8 +216,16 @@ def render_synthesis_comparison_table():
 
 
 def render_synthesis_decision_guide():
-    """Arbre de décision interactif"""
+    """Arbre de décision interactif - VERSION PÉDAGOGIQUE"""
     st.header("🎯 Guide de Décision Interactif")
+
+    st.info("""
+    **💡 Objectif de cette section:**
+
+    Te guider vers la MEILLEURE technique pour TON cas d'usage spécifique!
+
+    Réponds honnêtement aux questions en pensant à TON application réelle.
+    """)
 
     st.markdown("""
     ### 🌳 Quel Technique Pour Ton Cas?

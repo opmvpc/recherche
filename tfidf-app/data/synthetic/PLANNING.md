@@ -47,6 +47,43 @@
 | Super-héros & action | Approches originales, ton européen, questionnement moral |
 | Musique, sport & docu-fiction | Biopics inventés, compétitions, coulisses culturelles |
 
+## Guide de variation (recettes) – pour réécrire les 200 entrées
+But: chaque recette semble venir d’une source différente. Avant de réécrire, tirer au hasard un style + une structure + un niveau de détail.
+
+- Structures possibles (tirer 1) :
+  - Paragraphe libre (sans titres).
+  - Etapes numérotées concises.
+  - Puces « Ingrédients » puis mini-bloc « Comment faire ».
+  - Texte télégraphique façon fiche de service (quantités + mots-clés).
+  - Mini-story blog (« J’ai essayé… », « astuce de ma nonna »).
+  - Format magazine: chapeau + encadré astuces.
+  - Style menu de restaurant (description courte, pas d’étapes).
+  - Format « meal-prep » (durées, conservation).
+- Ton/voix (tirer 1) :
+  - Chef étoilé (précis, vocabulaire technique).
+  - Blog familial (chaleureux, adressé au lecteur).
+  - Étudiant pressé (rapide, économique).
+  - Nutrition/sain (focus substitutions, légèreté).
+  - Tradition régionale (références terroir/coutumes).
+  - Street food / moderne (punchy, emojis optionnels mais rares).
+  - Note de dégustation façon critique gastronomique.
+  - Télégraphique « service en cuisine » (impératifs courts).
+- Détails à varier (tirer 3+ au hasard) :
+  - Liste d’ingrédients complète ou partielle.
+  - Ustensiles mentionnés ou non.
+  - Durées/temps de repos parfois indiqués.
+  - Ajout 1-2 astuces (ex: récupération d’eau féculée, substitution).
+  - Mention d’accompagnement ou vin, pas systématique.
+  - Quantités parfois approximatives (« une bonne poignée ») parfois précises.
+  - Avec ou sans unités métriques.
+  - Inclusion d’une variante (option végétarienne, sans gluten…).
+- Longueur variable :
+  - Très court (1-2 phrases) / moyen (5-7 lignes) / plus développé (10-12 phrases).
+- Consignes générales :
+  - Toujours rester cohérent avec le titre/recette.
+  - Éviter la répétition de la même structure sur deux recettes consécutives.
+  - Rester en français, ton adapté à la voix choisie.
+
 ## Étapes (à cocher)
 1. [x] Définir le plan et le format (ce document).
 2. [x] Générer les 200 recettes et enregistrer `recipes_fr.json`.

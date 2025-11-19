@@ -7,11 +7,9 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import time
-from typing import List, Dict
-import matplotlib.pyplot as plt
 
 # Imports des visualizations nécessaires
-from visualizations import (
+from src.visualizations import (
     plot_embedding_space_3d,
     plot_clustering_2d,
     plot_multi_technique_comparison,
@@ -29,7 +27,7 @@ def create_embedding_engine(
     documents_texts: list, model_name: str = "paraphrase-multilingual-MiniLM-L12-v2"
 ):
     """Crée et index le moteur embeddings avec cache"""
-    from embedding_engine import EmbeddingSearch
+    from src.embedding_engine import EmbeddingSearch
 
     engine = EmbeddingSearch(model_name=model_name)
     with st.spinner("🧠 Calcul des embeddings (peut prendre 1-2min)..."):
@@ -43,7 +41,7 @@ def create_hybrid_engine(
     """
     Crée le moteur hybrid (pas de cache car très rapide)
     """
-    from hybrid_search import HybridSearch
+    from src.hybrid_search import HybridSearch
 
     return HybridSearch(documents_texts, bm25_engine, embedding_engine, alpha=alpha)
 
@@ -519,11 +517,11 @@ Non-zéros: 384 (100%)
     with st.expander("🤔 **Qu'est-ce qu'un Transformer?**"):
         st.markdown("""
         ### Architecture BERT/Sentence-BERT
-        
+
         **Transformer** = Architecture de réseau de neurones révolutionnaire (2017)
         - Utilisée par GPT, BERT, ChatGPT, etc.
         - Basée sur le mécanisme d'**Attention**
-        
+
         ---
 
         ### 💡 Le Mécanisme d'Attention (le Cœur)
@@ -532,94 +530,96 @@ Non-zéros: 384 (100%)
 
         **Exemple classique:** Le mot **"banque"**
         """)
-        
+
         col1, col2 = st.columns(2)
-        
+
         with col1:
             st.info("""
             **Phrase 1:**
             "La **banque** est fermée"
-            
+
             🏦 **Contexte:** institution financière
-            
+
             **Mots clés:**
             - "fermée" (horaires)
             - Pas de fleuve/rivière
             """)
-        
+
         with col2:
             st.success("""
             **Phrase 2:**
             "La **banque** du fleuve"
-            
+
             🏞️ **Contexte:** bord de rivière
-            
+
             **Mots clés:**
             - "fleuve" (géographie)
             - Pas d'horaires/argent
             """)
-        
+
         st.markdown("""
         ### 🔍 Comment l'Attention Fonctionne
-        
+
         **Mécanisme:** Chaque mot "regarde" tous les autres mots pour comprendre son sens!
-        
+
         **Exemple avec la phrase:** "Le chat noir mange du poisson"
         """)
-        
+
         # Tableau d'attention
-        attention_example = pd.DataFrame({
-            'Mot': ['noir'],
-            '→ "le"': ['0.05 (faible)'],
-            '→ "chat"': ['0.75 (FORT!)'],
-            '→ "noir"': ['0.02 (self)'],
-            '→ "mange"': ['0.08 (faible)'],
-            '→ "du"': ['0.03 (faible)'],
-            '→ "poisson"': ['0.07 (faible)']
-        })
-        
+        attention_example = pd.DataFrame(
+            {
+                "Mot": ["noir"],
+                '→ "le"': ["0.05 (faible)"],
+                '→ "chat"': ["0.75 (FORT!)"],
+                '→ "noir"': ["0.02 (self)"],
+                '→ "mange"': ["0.08 (faible)"],
+                '→ "du"': ["0.03 (faible)"],
+                '→ "poisson"': ["0.07 (faible)"],
+            }
+        )
+
         st.dataframe(attention_example, use_container_width=True, hide_index=True)
-        
+
         st.markdown("""
         **Interprétation:**
         - "noir" regarde surtout vers "chat" (0.75) → Il décrit le chat!
         - Les autres mots ont peu d'attention → Moins importants pour comprendre "noir"
-        
+
         **Ce que le réseau apprend:**
         - "noir" est un **adjectif** qui qualifie "chat"
         - Donc le vecteur de "noir" sera influencé par "chat"
         - Résultat: embeddings contextuels! 🎯
-        
+
         ---
-        
+
         ### 🏗️ Architecture Complète (Simplifié)
-        
+
         ```
         Input: "Le chat noir"
-        
+
         1. Embedding Layer
            ↓ Chaque mot → vecteur initial
-           
+
         2. Attention Layer #1
            ↓ Les mots se "regardent" entre eux
-           
+
         3. Feed Forward
            ↓ Transformation non-linéaire
-           
+
         4. Attention Layer #2
            ↓ Encore plus de contexte
-           
+
         ... (×12 couches) ...
-           
+
         12. Attention Layer #12
            ↓ Compréhension profonde
-           
+
         Output: Vecteurs contextuels riches!
         ```
-        
+
         **Après 12 couches d'attention:**
         Le réseau a une compréhension **profonde** du sens de chaque mot dans son contexte! 🧠
-        
+
         **Différence avec Word2Vec:**
         - Word2Vec: "banque" a **toujours** le même vecteur
         - BERT: "banque" a un vecteur **différent** selon le contexte! ✨
@@ -628,85 +628,87 @@ Non-zéros: 384 (100%)
     with st.expander("📚 **Comment le Réseau Apprend (Pré-entraînement)**"):
         st.markdown("""
         ### Masked Language Modeling (MLM)
-        
+
         **Objectif:** Forcer le réseau à comprendre le contexte pour prédire des mots manquants.
 
         **Tâche d'entraînement:**
         """)
-        
+
         col1, col2, col3 = st.columns(3)
-        
+
         with col1:
             st.markdown("**1️⃣ Phrase originale**")
             st.code("Le chat mange du poisson", language="text")
-        
+
         with col2:
             st.markdown("**2️⃣ Masquer un mot**")
             st.code("Le [MASK] mange du poisson", language="text")
-        
+
         with col3:
             st.markdown("**3️⃣ Prédire**")
             st.code("Prédiction: chat", language="text")
-        
+
         st.markdown("""
         ### 🤔 Pourquoi Ça Marche?
 
         Pour prédire correctement [MASK] = "chat", le réseau DOIT analyser:
-        
+
         **Analyse syntaxique:**
         - "Le [MASK]" → Probablement un **nom** (article + nom)
         - "mange" → Le sujet doit être **vivant** (pas "table", "livre")
-        
+
         **Analyse sémantique:**
         - "mange du poisson" → Animal qui mange du poisson
         - Options: chat, chien, ours, humain
         - Dans ce contexte: **chat** est le plus probable! 🎯
-        
+
         **Analyse contextuelle:**
         - Langue: français (pas "cat", "gato")
         - Registre: langue courante (pas jargon technique)
-        
+
         ---
-        
+
         ### 📊 Exemples d'Entraînement Réels
         """)
-        
-        training_examples = pd.DataFrame({
-            'Phrase Maskée': [
-                'Paris est la [MASK] de la France',
-                'Einstein a découvert la théorie de la [MASK]',
-                'Le [MASK] est un fruit rouge',
-                'J\'aime coder en [MASK] pour le web'
-            ],
-            'Prédiction': [
-                'capitale',
-                'relativité',
-                'fraise / tomate',
-                'JavaScript / Python'
-            ],
-            'Difficulté': [
-                '⭐ Facile',
-                '⭐⭐ Moyen',
-                '⭐⭐ Moyen',
-                '⭐⭐⭐ Difficile'
-            ]
-        })
-        
+
+        training_examples = pd.DataFrame(
+            {
+                "Phrase Maskée": [
+                    "Paris est la [MASK] de la France",
+                    "Einstein a découvert la théorie de la [MASK]",
+                    "Le [MASK] est un fruit rouge",
+                    "J'aime coder en [MASK] pour le web",
+                ],
+                "Prédiction": [
+                    "capitale",
+                    "relativité",
+                    "fraise / tomate",
+                    "JavaScript / Python",
+                ],
+                "Difficulté": [
+                    "⭐ Facile",
+                    "⭐⭐ Moyen",
+                    "⭐⭐ Moyen",
+                    "⭐⭐⭐ Difficile",
+                ],
+            }
+        )
+
         st.dataframe(training_examples, use_container_width=True, hide_index=True)
-        
+
         st.markdown("""
         ### 🎓 Ce Que le Réseau Apprend
-        
+
         **Après des milliards d'exemples:**
-        
+
         1. **Syntaxe:** Structure des phrases (sujet-verbe-complément)
         2. **Sémantique:** Relations entre concepts (capitale ↔ pays)
         3. **Connaissances factuelles:** Paris est la capitale de France
         4. **Contexte:** Mots qui vont ensemble (coder → JavaScript/Python)
-        
+
         **Résultat:**
         Le réseau apprend des **représentations vectorielles riches** qui capturent le sens! ✨
-        
+
         **Comparaison avec TF-IDF:**
         - TF-IDF: Compte les mots (aucun apprentissage)
         - BERT: Apprend le sens via des milliards d'exemples! 🔥
@@ -715,106 +717,116 @@ Non-zéros: 384 (100%)
     with st.expander("🌈 **Les Dimensions: Que Représentent-elles?**"):
         st.markdown("""
         ### L'Espace Vectoriel à 384 Dimensions
-        
+
         **Question fondamentale:** Qu'est-ce que ces 384 nombres représentent? 🤔
 
         **Réponse courte:** Des **concepts sémantiques** appris automatiquement!
-        
+
         ---
 
         ### 🎨 Exemple Simplifié (Illustration)
-        
+
         **Note:** Les vraies dimensions sont beaucoup plus complexes, mais voici l'intuition:
         """)
-        
-        dim_examples = pd.DataFrame({
-            'Dimension': ['Dim 0', 'Dim 1', 'Dim 2', 'Dim 3', 'Dim 4', '...', 'Dim 383'],
-            'Concept (Simplifié)': [
-                'vivant ↔ non-vivant',
-                'concret ↔ abstrait',
-                'positif ↔ négatif',
-                'animal ↔ objet',
-                'action ↔ état',
-                '...',
-                '??? (complexe)'
-            ],
-            'Exemple +': [
-                'chat (+0.9)',
-                'pomme (+0.8)',
-                'heureux (+0.9)',
-                'chien (+0.85)',
-                'courir (+0.7)',
-                '...',
-                '???'
-            ],
-            'Exemple −': [
-                'table (−0.7)',
-                'amour (−0.6)',
-                'triste (−0.8)',
-                'voiture (−0.75)',
-                'dormir (−0.6)',
-                '...',
-                '???'
-            ]
-        })
-        
+
+        dim_examples = pd.DataFrame(
+            {
+                "Dimension": [
+                    "Dim 0",
+                    "Dim 1",
+                    "Dim 2",
+                    "Dim 3",
+                    "Dim 4",
+                    "...",
+                    "Dim 383",
+                ],
+                "Concept (Simplifié)": [
+                    "vivant ↔ non-vivant",
+                    "concret ↔ abstrait",
+                    "positif ↔ négatif",
+                    "animal ↔ objet",
+                    "action ↔ état",
+                    "...",
+                    "??? (complexe)",
+                ],
+                "Exemple +": [
+                    "chat (+0.9)",
+                    "pomme (+0.8)",
+                    "heureux (+0.9)",
+                    "chien (+0.85)",
+                    "courir (+0.7)",
+                    "...",
+                    "???",
+                ],
+                "Exemple −": [
+                    "table (−0.7)",
+                    "amour (−0.6)",
+                    "triste (−0.8)",
+                    "voiture (−0.75)",
+                    "dormir (−0.6)",
+                    "...",
+                    "???",
+                ],
+            }
+        )
+
         st.dataframe(dim_examples, use_container_width=True, hide_index=True)
-        
+
         st.markdown("""
         ### ⚠️ Attention: Simplification!
-        
+
         En réalité, **aucune dimension n'est aussi simple**.
-        
+
         **Chaque dimension** capture une **combinaison complexe** de milliers de concepts:
         - Syntaxe + sémantique + contexte
         - Relations multiples simultanées
         - Interactions non-linéaires
-        
+
         **Exemple réel:**
         - Dimension 42 pourrait capturer: "animal domestique + affection + relation humaine"
         - Pas juste "animal" ou "domestique" séparément
-        
+
         ---
-        
+
         ### 🔬 Comment les Dimensions Émergent
-        
+
         **Le réseau n'est PAS programmé avec ces concepts!**
-        
+
         **Processus d'apprentissage:**
-        
+
         1. **Initialisation:** Valeurs aléatoires
         2. **Entraînement:** Millions d'exemples de texte
         3. **Ajustement:** Le réseau ajuste les poids pour mieux prédire
         4. **Émergence:** Les dimensions se spécialisent naturellement!
-        
+
         **Exemple concret:**
         ```
         Le réseau voit:
         - "chat" apparaît avec "miaule", "ronronne", "souris"
         - "chien" apparaît avec "aboie", "queue", "maître"
         - "table" apparaît avec "bois", "chaise", "manger"
-        
+
         Après entraînement:
         - Dimension X encode "animalité" (chat et chien proche, table loin)
         - Dimension Y encode "domestique" (chat, chien, et table proche!)
         - Dimension Z encode "mobilité" (chat et chien proche, table loin)
-        
+
         Résultat: "chat" et "chien" sont proches dans l'espace!
         ```
-        
+
         ---
-        
+
         ### 🎯 Ce Qui Importe
-        
+
         **Peu importe ce que chaque dimension représente individuellement!**
-        
+
         **Ce qui compte:**
         - Les **relations géométriques** entre vecteurs
         - "chat" et "chien" sont **proches** (petite distance)
         - "chat" et "ordinateur" sont **éloignés** (grande distance)
-        
+
         **Magie des embeddings:** Les relations sémantiques émergent naturellement! 🪄
-        
+
         **Analogie:**
         - Tu n'as pas besoin de comprendre comment fonctionne chaque neurone de ton cerveau
         - Ce qui compte c'est que tu puisses reconnaître un chat! 🐱
@@ -902,23 +914,103 @@ def render_embeddings_search(
                 plt.tight_layout()
                 st.pyplot(fig)
 
-                # Détails des résultats
+                # Détails des résultats avec analyses enrichies
                 st.markdown("### 🎯 Résultats Détaillés")
+
+                # Analyse de distribution des scores
+                scores_list = [r["score"] for r in results]
+                avg_score = np.mean(scores_list)
+                max_score = scores_list[0]
+                min_score = scores_list[-1]
+                score_range = max_score - min_score
+
+                st.markdown(f"""
+                **📊 Analyse rapide des scores:**
+                - **Meilleur:** {max_score:.3f} {"🔥" if max_score > 0.7 else "✅" if max_score > 0.5 else "⚠️"}
+                - **Moyen:** {avg_score:.3f}
+                - **Pire:** {min_score:.3f}
+                - **Écart:** {score_range:.3f} {"(bonne séparation!)" if score_range > 0.2 else "(scores proches)"}
+                """)
+
                 for rank, result in enumerate(results, 1):
                     doc_idx = result["index"]
                     score = result["score"]
 
+                    # Badge selon le score
+                    if score > 0.7:
+                        badge = "🔥"
+                        quality = "Excellent"
+                    elif score > 0.5:
+                        badge = "✅"
+                        quality = "Très bon"
+                    elif score > 0.3:
+                        badge = "👌"
+                        quality = "Bon"
+                    else:
+                        badge = "⚠️"
+                        quality = "Faible"
+
                     with st.expander(
-                        f"#{rank} - {documents_titles[doc_idx]} (Score: {score:.3f})"
+                        f"{badge} **#{rank}** - {documents_titles[doc_idx]} • Similarité: **{score:.3f}** ({quality})"
                     ):
-                        st.caption(f"📁 Catégorie: {documents_categories[doc_idx]}")
-                        st.write(documents_texts[doc_idx][:400] + "...")
+                        col1, col2 = st.columns([2, 1])
+
+                        with col1:
+                            st.caption(f"📁 Catégorie: {documents_categories[doc_idx]}")
+                            st.write(documents_texts[doc_idx][:400] + "...")
+
+                        with col2:
+                            st.markdown("**📊 Analyse:**")
+                            st.metric("Score", f"{score:.3f}", f"{score * 100:.1f}%")
+
+                            # Position relative
+                            position_pct = (
+                                (score - min_score) / score_range
+                                if score_range > 0
+                                else 0
+                            )
+                            st.metric("Position", f"Top {position_pct * 100:.0f}%")
+
+                            # Comparaison avec la moyenne
+                            diff_avg = score - avg_score
+                            st.metric("vs Moyenne", f"{diff_avg:+.3f}")
+
+                        st.markdown("---")
 
                         st.info(f"""
-                        **💡 Interprétation du score:**
-                        - Score de **{score:.3f}** signifie {score * 100:.1f}% de similarité sémantique
-                        - {"🔥 Très pertinent!" if score > 0.7 else "✅ Pertinent" if score > 0.5 else "⚠️ Moyennement pertinent"}
+                        **💡 Interprétation du score {score:.3f}:**
+
+                        **Similarité sémantique:** {score * 100:.1f}%
+
+                        **Ce que ça signifie:**
+                        - {"> 0.7: Documents **très similaires**! Même sujet, vocabulaire proche 🔥" if score > 0.7 else ""}
+                        - {"0.5-0.7: Documents **similaires**. Sujets connexes, concepts liés ✅" if 0.5 < score <= 0.7 else ""}
+                        - {"0.3-0.5: Documents **moyennement similaires**. Quelques concepts communs 👌" if 0.3 < score <= 0.5 else ""}
+                        - {"< 0.3: Documents **peu similaires**. Sujets différents ⚠️" if score <= 0.3 else ""}
+
+                        **Pourquoi ce rang?**
+                        - Embeddings capture le **sens global** du texte
+                        - Pas besoin de mots identiques (synonymes OK!)
+                        - Relations sémantiques implicites détectées 🎯
                         """)
+
+                # Conseils pédagogiques
+                st.markdown("---")
+                st.success("""
+                **💡 Expérimente avec différentes queries!**
+
+                **Astuce 1:** Teste des **synonymes**
+                - Query: "voiture rapide" vs "automobile véloce"
+                - Embeddings devrait donner des résultats similaires! ✅
+
+                **Astuce 2:** Teste des **concepts**
+                - Query: "capitale France" → Devrait trouver "Paris"!
+                - TF-IDF ne peut PAS faire ça (aucun mot commun)
+
+                **Astuce 3:** Teste des **paraphrases**
+                - "recette italienne pâtes" vs "plat italien spaghetti"
+                - Sens identique, mots différents → Embeddings comprend! 🔥
+                """)
 
 
 def render_embeddings_exploration(
@@ -1032,7 +1124,7 @@ def render_embeddings_exploration(
         with st.spinner("🔍 Recherche de documents similaires..."):
             similar_docs = embedding_engine.find_similar(selected_doc_idx, top_k=5)
 
-            st.markdown(f"**📄 Document source:**")
+            st.markdown("**📄 Document source:**")
             st.info(
                 f"**{documents_titles[selected_doc_idx]}**\n\n{documents_texts[selected_doc_idx][:200]}..."
             )
@@ -1053,12 +1145,19 @@ def render_embeddings_exploration(
 
 
 def render_embeddings_stepbystep(embedding_engine, documents_texts, documents_titles):
-    """Exemple pas-à-pas complet"""
+    """Exemple pas-à-pas complet avec PÉDAGOGIE MAXIMALE"""
     st.header("🎓 Exemple Complet: De A à Z")
 
     st.markdown("""
-    On va dérouler **TOUT** le processus sur un exemple simple.
-    Tu vas voir exactement ce qui se passe "sous le capot"! 🔍
+    Dans cette section, on va dérouler **TOUT** le processus des embeddings sur un exemple simple.
+
+    Tu vas voir:
+    1. Comment le texte devient un vecteur (encoding)
+    2. Les calculs mathématiques exacts
+    3. Comment on mesure la similarité
+    4. Pourquoi ça marche si bien! 🔍
+
+    **Objectif:** Comprendre chaque étape du pipeline embeddings! 🎯
     """)
 
     # Mini corpus
@@ -1250,7 +1349,7 @@ def render_embeddings_comparison(
                 overlap_all = len(set_tfidf & set_bm25 & set_emb)
                 st.metric("Commun aux 3", f"{overlap_all}/{top_k_battle}")
 
-            st.info(f"""
+            st.info("""
             💡 **Interprétation:**
 
             - **Overlap faible** entre Embeddings et TF-IDF/BM25 → Embeddings trouve des résultats **différents** (sémantiques)
@@ -1380,33 +1479,80 @@ def render_embeddings_hybrid(
 def render_embeddings_performance(
     embedding_engine, documents_texts, tfidf_engine, bm25_engine
 ):
-    """Performance et optimisations des embeddings"""
+    """Performance et optimisations des embeddings - VERSION PÉDAGOGIQUE"""
     st.header("⚡ Analyse des Performances")
 
-    st.markdown("### ⏱️ Temps de Calcul")
+    st.info("""
+    **💡 Disclaimer Important:**
 
-    # Tableau comparatif
+    Les embeddings sont **plus lents** que TF-IDF/BM25, MAIS offrent des résultats **beaucoup meilleurs**!
+
+    **Trade-off:** Vitesse vs Qualité
+    - TF-IDF/BM25: Rapide mais limité (lexical matching)
+    - Embeddings: Plus lent mais puissant (semantic matching) 🎯
+    """)
+
+    st.markdown("---")
+    st.markdown("### ⏱️ Comparaison des Temps de Calcul")
+
+    # Tableau comparatif enrichi
     perf_data = {
         "Opération": [
             "Indexation (1000 docs)",
             "Recherche (1 query)",
             "Recherche (100 queries)",
             "Mémoire (1000 docs)",
+            "Scalabilité (10k docs)",
         ],
-        "TF-IDF": ["~0.1s", "~5ms", "~0.5s", "~2 MB"],
-        "BM25": ["~0.1s", "~5ms", "~0.5s", "~2 MB"],
-        "Embeddings": ["~30s (GPU) / ~300s (CPU)", "~10ms", "~1s", "~15 MB"],
+        "TF-IDF": ["~0.1s ⚡", "~5ms ⚡", "~0.5s ⚡", "~2 MB", "Linéaire"],
+        "BM25": ["~0.1s ⚡", "~5ms ⚡", "~0.5s ⚡", "~2 MB", "Linéaire"],
+        "Embeddings (CPU)": ["~300s 🐌", "~10ms", "~1s", "~15 MB", "GPU requis!"],
+        "Embeddings (GPU)": ["~30s ⚡⚡", "~10ms", "~1s", "~15 MB", "OK jusqu'à 100k"],
     }
 
-    st.table(pd.DataFrame(perf_data))
+    df_perf = pd.DataFrame(perf_data)
+    st.dataframe(df_perf, use_container_width=True, hide_index=True)
+
+    st.markdown("""
+    ### 📊 Observations Clés
+
+    **Indexation (Calcul des Embeddings):**
+    - **TF-IDF/BM25:** Instantané (~0.1s pour 1000 docs) ⚡
+    - **Embeddings (CPU):** TRÈS lent (~300s pour 1000 docs) 🐌
+    - **Embeddings (GPU):** Acceptable (~30s pour 1000 docs) ⚡⚡
+
+    **⚠️ Pourquoi si lent?**
+    - Chaque document passe par un réseau de neurones (BERT)
+    - 12 couches d'attention + millions de paramètres
+    - Calculs intensifs (multiplications matricielles)
+
+    **Recherche (Query → Résultats):**
+    - Toutes les méthodes sont rapides (<10ms)
+    - Embeddings: juste un calcul de distance (produit scalaire)
+    - Une fois indexé, la recherche est instantanée! ✅
+
+    **Mémoire:**
+    - TF-IDF/BM25: Matrice sparse (beaucoup de zéros)
+    - Embeddings: Matrice dense (pas de zéros, plus gros)
+    - Trade-off: 5-10× plus de RAM pour embeddings
+    """)
 
     st.warning("""
-    ⚠️ **Embeddings plus lents:**
-    - **Indexation:** 10-100× plus lente (nécessite GPU pour perf)
-    - **Recherche:** 2-3× plus lente
-    - **Mémoire:** 5-10× plus gourmande
+    ⚠️ **Verdict: Quand utiliser Embeddings?**
 
-    **Mais:** Qualité de recherche BEAUCOUP meilleure! 🎯
+    **OUI si:**
+    - Tu as un GPU ou patience (indexation lente acceptable)
+    - Tu veux la MEILLEURE qualité de recherche
+    - Ton corpus contient synonymes/paraphrases/concepts
+    - Tu indexes une fois, recherches souvent
+
+    **NON si:**
+    - Tu n'as pas de GPU ET corpus énorme (>10k docs)
+    - Tu réindexes fréquemment (données changeantes)
+    - TF-IDF/BM25 suffit déjà (mots-clés simples)
+    - Contraintes temps réel strictes
+
+    **Compromis Hybrid:** Utilise les deux! (voir onglet "Hybrid") 🎯
     """)
 
     st.divider()
