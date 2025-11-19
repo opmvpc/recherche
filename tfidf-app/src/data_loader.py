@@ -38,6 +38,7 @@ def load_dataset(
         "recettes": SYNTHETIC_DIR / "recettes_fr.json",
         "films": SYNTHETIC_DIR / "films_fr.json",
         "wikipedia": DATASETS_DIR / "wikipedia_fr.json",
+        "livres": DATASETS_DIR / "livres_fr.json",
     }
 
     if name not in dataset_files:
@@ -72,8 +73,9 @@ def load_dataset(
         # Mode normal: limites par défaut
         limits = {
             "recettes": 50,
-            "films": 30,
-            "wikipedia": 200,
+            "films": 50,
+            "wikipedia": 100,
+            "livres": 100,
         }
         data = data[: limits.get(name, 50)]
 
@@ -103,7 +105,7 @@ def get_dataset_info(name: str) -> Dict[str, any]:
             "source": "Synthétique (généré avec IA)",
             "file": "data/synthetic/recettes_fr.json",
             "size_normal": 50,
-            "size_extended": "~1200",
+            "size_extended": 200,
             "categories": [
                 "Italienne",
                 "Asiatique",
@@ -117,8 +119,8 @@ def get_dataset_info(name: str) -> Dict[str, any]:
             "description": "Synopsis et critiques de films populaires en français (action, comédie, drame, SF, horreur)",
             "source": "Synthétique (généré avec IA)",
             "file": "data/synthetic/films_fr.json",
-            "size_normal": 30,
-            "size_extended": "~1200",
+            "size_normal": 50,
+            "size_extended": 200,
             "categories": ["Action", "Comédie", "Drame", "Science-Fiction", "Horreur"],
         },
         "wikipedia": {
@@ -126,7 +128,7 @@ def get_dataset_info(name: str) -> Dict[str, any]:
             "description": "Articles Wikipedia français sur des sujets variés (sciences, histoire, géographie, sport, technologie)",
             "source": "Hugging Face (wikimedia/wikipedia)",
             "file": "data/datasets/wikipedia_fr.json",
-            "size_normal": 200,
+            "size_normal": 100,
             "size_extended": 1000,
             "categories": [
                 "Science",
@@ -136,6 +138,21 @@ def get_dataset_info(name: str) -> Dict[str, any]:
                 "Technologie",
                 "Art",
                 "Général",
+            ],
+        },
+        "livres": {
+            "name": "Livres Français 📖",
+            "description": "Résumés de livres de la littérature française classique et moderne",
+            "source": "Hugging Face (CATIE-AQ/french_books_summaries)",
+            "file": "data/datasets/livres_fr.json",
+            "size_normal": 100,
+            "size_extended": 801,
+            "categories": [
+                "XIXe siècle",
+                "XXe siècle",
+                "Roman",
+                "Classique",
+                "Moderne",
             ],
         },
     }
@@ -150,7 +167,9 @@ def get_all_datasets_info() -> List[Dict[str, any]]:
     """
     Retourne les infos de tous les datasets disponibles
     """
-    return [get_dataset_info(name) for name in ["recettes", "films", "wikipedia"]]
+    return [
+        get_dataset_info(name) for name in ["recettes", "films", "wikipedia", "livres"]
+    ]
 
 
 # ============================================================================
@@ -169,6 +188,7 @@ def verify_datasets() -> Dict[str, bool]:
         "recettes": SYNTHETIC_DIR / "recettes_fr.json",
         "films": SYNTHETIC_DIR / "films_fr.json",
         "wikipedia": DATASETS_DIR / "wikipedia_fr.json",
+        "livres": DATASETS_DIR / "livres_fr.json",
     }
 
     results = {}
@@ -186,7 +206,7 @@ if __name__ == "__main__":
     verify_datasets()
 
     print("\n=== Test de chargement ===\n")
-    for name in ["recettes", "films", "wikipedia"]:
+    for name in ["recettes", "films", "wikipedia", "livres"]:
         try:
             data = load_dataset(name, extended=False)
             print(f"[OK] {name}: {len(data)} docs chargés\n")

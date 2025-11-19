@@ -28,23 +28,42 @@ def render_synthesis_section(dataset, documents_texts, documents_titles, documen
     Maintenant, découvre **quand** et **pourquoi** utiliser chacune! 🎯
     """)
 
-    # Sub-navigation
-    tab = st.radio(
-        "📍 Navigation Synthèse:",
-        ["📋 Tableau Comparatif", "🎯 Guide Décision", "💼 Cas d'Usage", "🔬 Benchmark", "🚀 Recommandations"],
-        horizontal=True,
-        key="synthesis_tabs"
-    )
+    # Initialiser la navigation dans session_state
+    if "synthesis_subtab" not in st.session_state:
+        st.session_state.synthesis_subtab = "tableau"
 
-    if tab == "📋 Tableau Comparatif":
+    # Sub-navigation avec boutons
+    st.markdown("### 📍 Navigation Synthèse:")
+    cols = st.columns(5)
+
+    with cols[0]:
+        if st.button("📋 Tableau Comparatif", use_container_width=True):
+            st.session_state.synthesis_subtab = "tableau"
+    with cols[1]:
+        if st.button("🎯 Guide Décision", use_container_width=True):
+            st.session_state.synthesis_subtab = "guide"
+    with cols[2]:
+        if st.button("💼 Cas d'Usage", use_container_width=True):
+            st.session_state.synthesis_subtab = "usage"
+    with cols[3]:
+        if st.button("🔬 Benchmark", use_container_width=True):
+            st.session_state.synthesis_subtab = "benchmark"
+    with cols[4]:
+        if st.button("🚀 Recommandations", use_container_width=True):
+            st.session_state.synthesis_subtab = "reco"
+
+    st.divider()
+
+    # Afficher la sous-section correspondante
+    if st.session_state.synthesis_subtab == "tableau":
         render_synthesis_comparison_table()
-    elif tab == "🎯 Guide Décision":
+    elif st.session_state.synthesis_subtab == "guide":
         render_synthesis_decision_guide()
-    elif tab == "💼 Cas d'Usage":
+    elif st.session_state.synthesis_subtab == "usage":
         render_synthesis_use_cases()
-    elif tab == "🔬 Benchmark":
+    elif st.session_state.synthesis_subtab == "benchmark":
         render_synthesis_benchmark(tfidf_engine, bm25_engine, embedding_engine, documents_texts, documents_titles)
-    elif tab == "🚀 Recommandations":
+    elif st.session_state.synthesis_subtab == "reco":
         render_synthesis_recommendations()
 
 

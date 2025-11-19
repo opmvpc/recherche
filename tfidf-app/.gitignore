@@ -18,6 +18,7 @@ env/
 data/datasets/*
 !data/datasets/.gitkeep
 !data/datasets/wikipedia_fr.json
+!data/datasets/livres_fr.json
 data/cache/
 
 # Models cache (embeddings)

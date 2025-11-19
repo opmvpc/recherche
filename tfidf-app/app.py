@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from tfidf_engine import TFIDFEngine
 from bm25_engine import BM25Engine
-from data_loader import load_dataset, get_all_datasets_info
+from data_loader import load_dataset
 
 # Imports optionnels pour Embeddings (nécessite sentence-transformers)
 try:
@@ -82,11 +82,14 @@ st.markdown(
 # ============================================================================
 
 
-@st.cache_data
+@st.cache_data(show_spinner="Chargement du dataset...")
 def load_cached_dataset(
-    dataset_name: str, sample_size: int = None, extended: bool = False
+    dataset_name: str,
+    sample_size: int = None,
+    extended: bool = False,
+    _version: int = 3,
 ):
-    """Charge un dataset avec cache"""
+    """Charge un dataset avec cache (version 3 - tailles corrigées)"""
     return load_dataset(dataset_name, sample_size=sample_size, extended=extended)
 
 
@@ -250,20 +253,18 @@ def render_datasets_section(dataset_name: str, use_extended: bool):
     st.markdown("---")
     st.subheader("🔍 Source des Données")
 
-    # Vérifier si on utilise HuggingFace ou hardcodé
-    from data_loader import HF_AVAILABLE
+    # Récupérer les infos du dataset
+    from src.data_loader import get_dataset_info
 
-    if HF_AVAILABLE:
-        st.success("✅ **Hugging Face `datasets` est disponible!**")
-    else:
-        st.warning(
-            "⚠️ **Hugging Face `datasets` NON disponible. Utilisation de données hardcodées.**"
-        )
+    dataset_info = get_dataset_info(dataset_name)
+
+    st.success(f"✅ **Chargé depuis:** {dataset_info['source']}")
 
     st.info(f"""
     **Dataset actuel:** `{dataset_name}`
-    **Taille:** `{"Extended (10k docs)" if use_extended else "Standard (1k docs)"}`
+    **Taille:** `{"Extended" if use_extended else "Normal"}`
     **Documents chargés:** `{len(dataset)}`
+    **Fichier:** `{dataset_info["file"]}`
     """)
 
     st.markdown("---")
@@ -662,12 +663,17 @@ def main():
             st.markdown("### ⚙️ Configuration")
 
             # Sélection dataset
-            datasets_info = get_all_datasets_info()
-            dataset_names = [info["name"] for info in datasets_info]
+            dataset_names = [
+                "recettes",
+                "films",
+                "wikipedia",
+                "livres",
+            ]  # Noms techniques
             dataset_labels = {
                 "recettes": "🍝 Recettes",
                 "films": "🎬 Films",
                 "wikipedia": "📚 Wikipedia",
+                "livres": "📖 Livres",
             }
 
             selected_dataset = st.selectbox(
@@ -687,41 +693,20 @@ def main():
 
             # Afficher la VRAIE taille du dataset sélectionné!
             try:
-                # Compter rapidement le nombre de docs
-                if selected_dataset in ["recettes", "films"]:
-                    # Lire depuis synthetic/
-                    file_mapping = {
-                        "recettes": "data/synthetic/recipes_fr.json",
-                        "films": "data/synthetic/films_fr.json",
-                    }
-                    import json
-                    from pathlib import Path
+                # Utiliser get_dataset_info pour avoir les infos
+                from src.data_loader import get_dataset_info
 
-                    if use_extended:
-                        # Mode étendu = TOUS les docs du fichier
-                        file_path = Path(file_mapping[selected_dataset])
-                        if file_path.exists():
-                            with open(file_path, "r", encoding="utf-8") as f:
-                                data = json.load(f)
-                                estimated_docs = f"{len(data):,}"
-                                size_label = "(étendu)"
-                        else:
-                            estimated_docs = "~1,000"
-                            size_label = "(étendu)"
-                    else:
-                        # Mode normal = 50 docs
-                        estimated_docs = "50"
-                        size_label = ""
+                dataset_info = get_dataset_info(selected_dataset)
 
-                elif selected_dataset == "wikipedia":
-                    if use_extended:
-                        estimated_docs = "1,000"
-                        size_label = "(étendu - HF)"
-                    else:
-                        estimated_docs = "50"
-                        size_label = "(hardcodé)"
+                if use_extended:
+                    estimated_docs = (
+                        f"{dataset_info['size_extended']:,}"
+                        if isinstance(dataset_info["size_extended"], int)
+                        else dataset_info["size_extended"]
+                    )
+                    size_label = "(étendu)"
                 else:
-                    estimated_docs = "?"
+                    estimated_docs = f"{dataset_info['size_normal']:,}"
                     size_label = ""
 
                 st.info(f"📊 **{estimated_docs} documents** {size_label}")
