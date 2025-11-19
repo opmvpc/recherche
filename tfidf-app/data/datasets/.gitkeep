@@ -1,0 +1,2 @@
+# Ce dossier contient les datasets téléchargés localement
+# Les fichiers JSON sont ignorés par git (voir .gitignore)
