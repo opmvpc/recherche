@@ -86,8 +86,8 @@
 1. **Clone le repository**
 
 ```bash
-git clone https://github.com/ton-username/recherche-textuelle-explorer.git
-cd recherche-textuelle-explorer/tfidf-app
+git clone https://github.com/opmvpc/recherche.git
+cd recherche/tfidf-app
 ```
 
 2. **Crée un environnement virtuel** (recommandé)
@@ -104,7 +104,7 @@ source .venv/bin/activate
 
 3. **Installe les dépendances**
 
-### Option A: Installation Complète (TOUTES LES SECTIONS)
+### Installation Complète (TOUTES LES SECTIONS)
 
 ```bash
 # Installe TOUT (TF-IDF, BM25, Embeddings, Synthèse)
@@ -112,46 +112,6 @@ pip install -r requirements.txt
 ```
 
 **Note:** L'installation de PyTorch peut prendre plusieurs minutes (~3-10 min selon connexion).
-
-### Option B: Installation Minimale (TF-IDF + BM25 uniquement)
-
-```bash
-# Installation légère sans embeddings (plus rapide: ~1 min)
-pip install streamlit numpy pandas matplotlib seaborn plotly scikit-learn scipy requests
-```
-
-Les sections Embeddings/Synthèse seront verrouillées 🔒, mais TF-IDF et BM25 fonctionneront parfaitement!
-
-### Pour les utilisateurs avec GPU CUDA (optionnel):
-
-```bash
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-```
-
-4. **[OPTIONNEL] Télécharge le modèle Embeddings en avance**
-
-Pour éviter le téléchargement au premier lancement de l'app:
-
-### Option A: Script Automatique (RECOMMANDÉ ⭐)
-
-```bash
-python setup_embeddings.py
-```
-
-Ce script interactif va:
-
-- ✅ Vérifier et installer les dépendances manquantes
-- ✅ Télécharger le modèle `paraphrase-multilingual-MiniLM-L12-v2` (~200 MB)
-- ✅ Tester que tout fonctionne
-- ⏱️ Durée: 3-10 minutes
-
-### Option B: Téléchargement Simple du Modèle
-
-```bash
-python download_model.py
-```
-
-Télécharge uniquement le modèle (nécessite que les dépendances soient installées).
 
 5. **Lance l'application**
 
