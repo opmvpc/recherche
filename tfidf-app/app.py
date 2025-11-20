@@ -269,11 +269,11 @@ def render_datasets_section(dataset_name: str, use_extended: bool):
 
     st.markdown("---")
 
-    # === LISTE DES DOCUMENTS ===
+    # === LISTE DES DOCUMENTS (PAGINÉE) ===
     st.header("📋 Liste des Documents")
 
     # Recherche/Filtrage
-    col1, col2 = st.columns([3, 1])
+    col1, col2, col3 = st.columns([3, 1, 1])
     with col1:
         search_text = st.text_input(
             "🔎 Rechercher dans les titres:",
@@ -283,6 +283,13 @@ def render_datasets_section(dataset_name: str, use_extended: bool):
     with col2:
         selected_category = st.selectbox(
             "🏷️ Catégorie:", ["Toutes"] + sorted(categories)
+        )
+    with col3:
+        page_size = st.selectbox(
+            "📄 Par page:",
+            options=[10, 25, 50, 100],
+            index=1,
+            help="Nombre de documents par page",
         )
 
     # Filtrer les documents
@@ -298,27 +305,90 @@ def render_datasets_section(dataset_name: str, use_extended: bool):
             if doc.get("category", "N/A") == selected_category
         ]
 
-    st.caption(f"📊 {len(filtered_docs)} documents affichés (sur {len(dataset)} total)")
+    # Initialiser la pagination
+    if "dataset_page" not in st.session_state:
+        st.session_state.dataset_page = 0
 
-    # Sélecteur de document
-    if len(filtered_docs) == 0:
+    total_docs = len(filtered_docs)
+    total_pages = max(1, (total_docs + page_size - 1) // page_size)
+
+    # S'assurer que la page est valide
+    if st.session_state.dataset_page >= total_pages:
+        st.session_state.dataset_page = max(0, total_pages - 1)
+
+    # Calculer les indices de la page
+    start_idx = st.session_state.dataset_page * page_size
+    end_idx = min(start_idx + page_size, total_docs)
+    current_page_docs = filtered_docs[start_idx:end_idx]
+
+    # Afficher les infos de pagination
+    st.caption(
+        f"📊 Affichage {start_idx + 1}-{end_idx} sur {total_docs} documents • Page {st.session_state.dataset_page + 1}/{total_pages}"
+    )
+
+    if total_docs == 0:
         st.warning("😕 Aucun document trouvé avec ces filtres!")
     else:
-        # Créer une liste de choix
-        doc_choices = [
-            f"[{i + 1}] {doc['title'][:60]}{'...' if len(doc['title']) > 60 else ''}"
-            for i, doc in enumerate(filtered_docs)
-        ]
+        # Créer le DataFrame pour affichage
+        table_data = []
+        for i, doc in enumerate(current_page_docs):
+            table_data.append(
+                {
+                    "#": start_idx + i + 1,
+                    "Titre": doc["title"][:80]
+                    + ("..." if len(doc["title"]) > 80 else ""),
+                    "Catégorie": doc.get("category", "N/A"),
+                    "Mots": len(doc["text"].split()),
+                    "_full_doc": doc,  # Stocker le doc complet (caché)
+                }
+            )
 
-        selected_idx = st.selectbox(
-            "📄 Sélectionne un document à inspecter:",
-            range(len(doc_choices)),
-            format_func=lambda i: doc_choices[i],
+        df = pd.DataFrame(table_data)
+
+        # Afficher le tableau (sans la colonne _full_doc)
+        df_display = df.drop(columns=["_full_doc"])
+        st.dataframe(df_display, use_container_width=True, hide_index=True, height=400)
+
+        # Contrôles de pagination
+        col_prev, col_info, col_next = st.columns([1, 2, 1])
+
+        with col_prev:
+            if st.button(
+                "⬅️ Précédent",
+                disabled=(st.session_state.dataset_page == 0),
+                use_container_width=True,
+            ):
+                st.session_state.dataset_page -= 1
+                st.rerun()
+
+        with col_info:
+            st.markdown(
+                f"<div style='text-align: center; padding-top: 8px;'>Page {st.session_state.dataset_page + 1} / {total_pages}</div>",
+                unsafe_allow_html=True,
+            )
+
+        with col_next:
+            if st.button(
+                "Suivant ➡️",
+                disabled=(st.session_state.dataset_page >= total_pages - 1),
+                use_container_width=True,
+            ):
+                st.session_state.dataset_page += 1
+                st.rerun()
+
+        st.markdown("---")
+
+        # Sélection d'un document pour voir les détails
+        st.subheader("🔍 Inspecter un Document")
+
+        selected_doc_idx = st.selectbox(
+            "Sélectionne un document de la page actuelle:",
+            range(len(current_page_docs)),
+            format_func=lambda i: f"[{start_idx + i + 1}] {current_page_docs[i]['title'][:60]}",
         )
 
-        # Afficher le document sélectionné
-        if selected_idx is not None:
-            doc = filtered_docs[selected_idx]
+        if selected_doc_idx is not None:
+            doc = current_page_docs[selected_doc_idx]
 
             st.markdown("---")
             st.subheader("📄 Détails du Document")

@@ -68,6 +68,10 @@ But: chaque recette semble venir d’une source différente. Avant de réécrire
   - Street food / moderne (punchy, emojis optionnels mais rares).
   - Note de dégustation façon critique gastronomique.
   - Télégraphique « service en cuisine » (impératifs courts).
+- Variation contexte/auteur (tirer 1 ou 2) :
+  - Cuisine de semaine vs repas de fête.
+  - Auteur étudiant, parent pressé, chef de bistrot, nonna, globe-trotter, critique food.
+  - Contrainte budget/temps/ustensiles limités ou au contraire équipement pro.
 - Détails à varier (tirer 3+ au hasard) :
   - Liste d’ingrédients complète ou partielle.
   - Ustensiles mentionnés ou non.
@@ -77,6 +81,16 @@ But: chaque recette semble venir d’une source différente. Avant de réécrire
   - Quantités parfois approximatives (« une bonne poignée ») parfois précises.
   - Avec ou sans unités métriques.
   - Inclusion d’une variante (option végétarienne, sans gluten…).
+- Longueur/forme :
+  - Tirer une taille cible (mini 1-2 phrases / courte / moyenne / longue).
+  - Mélanger phrases complètes et style télégraphique selon la voix.
+- Anti-répétition :
+  - Pas de structure identique sur deux recettes d’affilée (alterner puces, paragraphes, listes, etc.).
+  - Éviter d’ouvrir systématiquement par un libellé suivi d’un « : »; varier ponctuation et tournures.
+- Diversifier la granularité :
+  - Parfois inclure juste « comment servir » sans étapes.
+  - Parfois un micro récit (souvenir, conseil d’ami, astuce de marché).
+  - Parfois un bloc « ingrédients » + rien d’autre (style fiche courte).
 - Longueur variable :
   - Très court (1-2 phrases) / moyen (5-7 lignes) / plus développé (10-12 phrases).
 - Consignes générales :

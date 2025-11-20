@@ -87,6 +87,7 @@ def render_embeddings_section(
         "⚔️ Comparaison",
         "🎨 Hybrid",
         "⚡ Performance",
+        "🚀 Recommandations",
     ]
     tab = render_tab_navigation(
         tabs_list, "embeddings_tabs", default_tab="📖 Introduction"
@@ -131,6 +132,8 @@ def render_embeddings_section(
         render_embeddings_performance(
             embedding_engine, documents_texts, tfidf_engine, bm25_engine
         )
+    elif tab == "🚀 Recommandations":
+        render_embeddings_recommendations()
 
 
 def render_embeddings_intro(documents_texts, tfidf_engine):
@@ -1687,6 +1690,370 @@ def render_embeddings_performance(
     with open('embeddings_cache.pkl', 'rb') as f:
         embeddings = pickle.load(f)
     ```
+    """)
+
+
+def render_embeddings_recommendations():
+    """Section Recommandations pour le projet"""
+    st.header("🚀 Recommandations pour Votre Projet")
+
+    st.markdown("""
+    Vous êtes en train de développer votre projet web! Voici comment **intégrer des embeddings dans votre application** de manière professionnelle et économique. 💼
+    """)
+
+    st.divider()
+
+    # === OPENROUTER ===
+    st.markdown("## 🌐 Option 1: API Embeddings avec OpenRouter")
+
+    st.markdown("""
+    **Pourquoi OpenRouter?**
+    - 🚀 **Rapide:** Exécution sur GPU professionnel
+    - 💰 **Pas cher:** À partir de $0.005/M tokens
+    - 🎯 **Qualité supérieure:** Modèles optimisés et maintenus
+    - 🔧 **Simple:** API REST standard, pas de setup serveur
+    - 🌍 **Scalable:** Gère automatiquement la montée en charge
+    """)
+
+    st.markdown("### 📊 Modèles Disponibles (Sélection)")
+
+    # Tableau des modèles avec prix
+    models_data = [
+        {
+            "Modèle": "all-MiniLM-L6-v2",
+            "Dimensions": 384,
+            "Contexte": "512 tokens",
+            "Prix": "$0.005/M",
+            "Cas d'usage": "Léger, rapide",
+        },
+        {
+            "Modèle": "all-MiniLM-L12-v2",
+            "Dimensions": 384,
+            "Contexte": "512 tokens",
+            "Prix": "$0.005/M",
+            "Cas d'usage": "Équilibré",
+        },
+        {
+            "Modèle": "all-mpnet-base-v2",
+            "Dimensions": 768,
+            "Contexte": "512 tokens",
+            "Prix": "$0.005/M",
+            "Cas d'usage": "Haute qualité",
+        },
+        {
+            "Modèle": "bge-base-en-v1.5",
+            "Dimensions": 768,
+            "Contexte": "512 tokens",
+            "Prix": "$0.005/M",
+            "Cas d'usage": "Retrieval",
+        },
+        {
+            "Modèle": "multilingual-e5-large",
+            "Dimensions": 1024,
+            "Contexte": "512 tokens",
+            "Prix": "$0.01/M",
+            "Cas d'usage": "Multilingue",
+        },
+        {
+            "Modèle": "bge-m3",
+            "Dimensions": 1024,
+            "Contexte": "8K tokens",
+            "Prix": "$0.01/M",
+            "Cas d'usage": "Longs docs",
+        },
+        {
+            "Modèle": "OpenAI ada-002",
+            "Dimensions": 1536,
+            "Contexte": "8K tokens",
+            "Prix": "$0.10/M",
+            "Cas d'usage": "Référence",
+        },
+        {
+            "Modèle": "OpenAI text-3-large",
+            "Dimensions": 3072,
+            "Contexte": "8K tokens",
+            "Prix": "$0.13/M",
+            "Cas d'usage": "Top qualité",
+        },
+    ]
+
+    df_models = pd.DataFrame(models_data)
+    st.dataframe(df_models, use_container_width=True, hide_index=True)
+
+    st.divider()
+
+    # === CALCUL DE COÛT ===
+    st.markdown("### 💰 Calcul de Coût: C'est VRAIMENT Pas Cher!")
+
+    st.markdown("""
+    **Exemple concret:** Embedder **TOUS les livres Harry Potter + La Bible**
+    """)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.metric("📚 Corpus complet", "~2.5 millions de mots")
+        st.metric("🔢 Tokens (approx)", "~3.3M tokens")
+        st.metric("📊 Nombre de documents", "~10,000 chunks")
+
+    with col2:
+        st.metric("💵 Coût (MiniLM)", "$0.016")
+        st.metric("💵 Coût (MPNet)", "$0.016")
+        st.metric("💵 Coût (E5-Large)", "$0.033")
+
+    st.success("""
+    ✅ **Résultat:** Même les 7 livres Harry Potter + la Bible = **moins de 5 centimes**!
+
+    Pour votre projet étudiant avec quelques centaines/milliers de documents: **~$0.001 à $0.01**
+    → Moins qu'un café! ☕
+    """)
+
+    st.info("""
+    💡 **Astuce:**
+    - Embedder **une seule fois** au début (indexation)
+    - Stocker les embeddings dans votre DB
+    - Embedder **seulement la query** à chaque recherche (~0.0001¢ par recherche)
+
+    **Coût réel en prod:** Négligeable! 🎉
+    """)
+
+    st.divider()
+
+    # === COMPARAISON LOCAL VS API ===
+    st.markdown("### ⚖️ Local vs API: Comparaison")
+
+    comparison_data = {
+        "Critère": [
+            "Qualité",
+            "Vitesse",
+            "Setup",
+            "Coût initial",
+            "Coût usage",
+            "Maintenance",
+            "GPU requis",
+            "Scalabilité",
+        ],
+        "Local (CPU)": [
+            "✅ Bon",
+            "🐌 Lent (1-10s)",
+            "😰 Complexe",
+            "💰 Gratuit",
+            "💵 Électricité",
+            "🔧 À faire",
+            "❌ Non",
+            "⚠️ Limitée",
+        ],
+        "Local (GPU)": [
+            "✅✅ Excellent",
+            "⚡ Rapide (0.1s)",
+            "😱 Très complexe",
+            "💰💰💰 Cher",
+            "💵💵 Électricité",
+            "🔧🔧 Maintenance",
+            "✅ Oui (CUDA)",
+            "⚠️ Limitée",
+        ],
+        "API (OpenRouter)": [
+            "✅✅ Excellent",
+            "⚡⚡ Très rapide",
+            "😊 Simple",
+            "💰 Gratuit",
+            "💵 ~$0.005/M",
+            "✨ Aucune",
+            "☁️ Géré",
+            "🚀 Illimitée",
+        ],
+    }
+
+    df_comparison = pd.DataFrame(comparison_data)
+    st.dataframe(df_comparison, use_container_width=True, hide_index=True)
+
+    st.divider()
+
+    # === OUTILS ET PLATEFORMES ===
+    st.markdown("## 🛠️ Outils et Plateformes Recommandés")
+
+    col_tool1, col_tool2 = st.columns(2)
+
+    with col_tool1:
+        st.markdown("""
+        ### 🗄️ Vector Databases
+
+        **LanceDB** 🏆
+        - 📦 Self-hosted ou cloud
+        - 🚀 Ultra rapide (Rust)
+        - 💾 Fichiers locaux ou S3
+        - 🐍 API Python simple
+        - 💰 Gratuit (self-hosted)
+
+        ```python
+        import lancedb
+
+        db = lancedb.connect("./data/vectors")
+        table = db.create_table("docs",
+                                data=embeddings)
+
+        # Recherche
+        results = table.search(query_vec)
+                      .limit(10)
+                      .to_list()
+        ```
+        """)
+
+    with col_tool2:
+        st.markdown("""
+        ### 🐘 PostgreSQL + pgvector
+
+        **Extension pgvector** 🎯
+        - 🗄️ DB que vous connaissez déjà!
+        - 🔧 Extension simple à installer
+        - 💼 Production-ready
+        - 🔗 Combine vecteurs + données SQL
+
+        ```sql
+        CREATE EXTENSION vector;
+
+        CREATE TABLE documents (
+          id SERIAL PRIMARY KEY,
+          content TEXT,
+          embedding vector(384)
+        );
+
+        -- Recherche par similarité
+        SELECT * FROM documents
+        ORDER BY embedding <-> $1
+        LIMIT 10;
+        ```
+        """)
+
+    st.markdown("""
+    ### 📚 Autres options populaires:
+    - **Pinecone:** Cloud, très simple, gratuit jusqu'à 1M vecteurs
+    - **Weaviate:** Open-source, features riches (filtres, hybrid search)
+    - **Qdrant:** Rust, performant, filtres avancés
+    - **Milvus:** Enterprise-grade, très scalable
+    """)
+
+    st.divider()
+
+    # === CAS D'USAGE POUR LE PROJET ===
+    st.markdown("## 💼 Cas d'Usage pour Votre Projet")
+
+    use_cases = [
+        {
+            "icon": "💬",
+            "title": "Recherche dans Conversations",
+            "desc": "Retrouver des messages par sens (pas seulement mots-clés)",
+            "example": "Query: 'bug de connexion' → Trouve: 'je peux plus me logger'",
+        },
+        {
+            "icon": "📄",
+            "title": "Base de Docs/Knowledge Base",
+            "desc": "Recherche sémantique dans documentation, FAQs, wikis",
+            "example": "Query: 'comment reset mdp?' → Trouve docs sur réinitialisation",
+        },
+        {
+            "icon": "🛍️",
+            "title": "Recherche Produits E-commerce",
+            "desc": "Recommandations basées sur descriptions similaires",
+            "example": "Query: 'chaussures confort été' → Trouve sandales légères",
+        },
+        {
+            "icon": "📧",
+            "title": "Emails / Tickets Support",
+            "desc": "Classer et retrouver tickets similaires automatiquement",
+            "example": "Nouveau ticket → Suggère solutions de tickets similaires passés",
+        },
+        {
+            "icon": "📰",
+            "title": "Articles / Blog",
+            "desc": "Recommander articles similaires, clustering de contenus",
+            "example": "'Articles liés' basés sur vraie similarité de contenu",
+        },
+    ]
+
+    for uc in use_cases:
+        with st.expander(f"{uc['icon']} {uc['title']}"):
+            st.markdown(f"**Description:** {uc['desc']}")
+            st.info(f"**Exemple:** {uc['example']}")
+
+    st.divider()
+
+    # === RAG (TEASER) ===
+    st.markdown("## 🎓 Et Après? RAG (Retrieval-Augmented Generation)")
+
+    st.markdown("""
+    Les embeddings sont la **base des systèmes RAG** (Retrieval-Augmented Generation):
+
+    **Principe:**
+    1. 🔍 **Recherche** (embeddings) → Trouver les docs pertinents
+    2. 📄 **Context** → Injecter ces docs dans le prompt
+    3. 🤖 **Generation** (LLM) → Générer une réponse basée sur VOS données
+
+    **Exemple:**
+    ```
+    User: "Quelle est notre politique de remboursement?"
+
+    → [Embeddings] Trouve les 3 docs les plus pertinents
+    → [LLM] Génère réponse basée sur CES docs (pas hallucination!)
+    ```
+
+    **Applications:**
+    - 💬 Chatbots sur vos données
+    - 📚 Q&A sur documentation
+    - 📧 Assistants customer support
+    - 🧑‍💼 Analyse de documents légaux/contractuels
+    """)
+
+    st.success("""
+    🎓 **On verra les RAG en détail dans un prochain cours!**
+
+    Mais vous avez maintenant **toutes les bases** pour:
+    - Comprendre comment ça marche
+    - Implémenter votre propre système de recherche sémantique
+    - L'intégrer dans votre projet web
+    - Calculer les coûts et choisir la bonne solution
+    """)
+
+    st.divider()
+
+    # === CHECKLIST PROJET ===
+    st.markdown("## ✅ Checklist pour Votre Projet")
+
+    st.markdown("""
+    **Pour intégrer des embeddings dans votre app:**
+
+    1. ✅ **Choisir un modèle:**
+       - Petit projet: `all-MiniLM-L6-v2` (384 dim, rapide)
+       - Projet moyen: `all-mpnet-base-v2` (768 dim, qualité)
+       - Multilingue: `multilingual-e5-large` (1024 dim)
+
+    2. ✅ **Choisir l'hébergement:**
+       - Prototype: Local (gratuit, ok pour < 10k docs)
+       - Production: OpenRouter API ($0.005/M tokens)
+
+    3. ✅ **Choisir la vector DB:**
+       - Simple: PostgreSQL + pgvector (vous connaissez déjà!)
+       - Avancé: LanceDB (self-hosted, très rapide)
+       - Cloud: Pinecone (gratuit jusqu'à 1M vecteurs)
+
+    4. ✅ **Implémenter:**
+       - Indexer vos docs (1× au départ)
+       - Stocker embeddings dans DB
+       - API de recherche: embedder query + similarity search
+
+    5. ✅ **Optimiser:**
+       - Cache les embeddings fréquents
+       - Batch les requêtes d'indexation
+       - Filtres pré-recherche (catégories, dates) pour réduire l'espace
+    """)
+
+    st.balloons()
+
+    st.success("""
+    🚀 **Vous avez maintenant toutes les cartes en main!**
+
+    N'hésitez pas à expérimenter et à nous poser des questions pendant le développement de votre projet! 💪
     """)
 
 

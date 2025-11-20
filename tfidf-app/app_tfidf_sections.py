@@ -1636,25 +1636,62 @@ def render_tfidf_performance(
 
     st.markdown("""
     **On va comparer les performances** sur différents datasets pour voir l'impact de la taille! 📊
-
-    Clique sur le bouton ci-dessous pour lancer les benchmarks (ça prend ~10-20 secondes).
     """)
 
+    # Checkbox pour inclure les datasets étendus
+    include_extended = st.checkbox(
+        "📦 Inclure les datasets étendus (plus long: ~2-3 minutes)",
+        value=False,
+        help="Teste aussi les versions étendues des datasets pour voir l'impact sur les performances",
+        key="tfidf_bench_extended"
+    )
+
+    if include_extended:
+        st.warning("""
+        ⚠️ **Attention:** Avec les datasets étendus, les benchmarks prendront **2-3 minutes**.
+
+        On testera:
+        - 🍝 Recettes: **50 → 200** docs
+        - 🎬 Films: **50 → 200** docs
+        - 📖 Livres: **100 → 801** docs
+        - 📚 Wikipedia: **100 → 1000** docs
+        """)
+    else:
+        st.info("""
+        On testera les datasets en mode normal (~30 secondes):
+        - 🍝 Recettes: **50** docs
+        - 🎬 Films: **50** docs
+        - 📖 Livres: **100** docs
+        - 📚 Wikipedia: **100** docs
+        """)
+
     if st.button("🚀 Lancer les Benchmarks!", type="primary", key="tfidf_bench_btn"):
-        with st.spinner("⏱️ Benchmarking en cours... (peut prendre 10-20s)"):
+        spinner_text = "⏱️ Benchmarking en cours... (2-3 minutes)" if include_extended else "⏱️ Benchmarking en cours... (30 secondes)"
+
+        with st.spinner(spinner_text):
             from src.data_loader import load_dataset
             import time
 
-            # Définir les tests
-            benchmark_tests = [
-                {"name": "recettes", "extended": False, "label": "Recettes (30 docs)"},
-                {"name": "films", "extended": False, "label": "Films (25 docs)"},
-                {
-                    "name": "wikipedia",
-                    "extended": False,
-                    "label": "Wikipedia (50 docs)",
-                },
-            ]
+            # Définir les tests selon le mode
+            if include_extended:
+                benchmark_tests = [
+                    {"name": "recettes", "extended": False, "label": "Recettes (50 docs)"},
+                    {"name": "films", "extended": False, "label": "Films (50 docs)"},
+                    {"name": "livres", "extended": False, "label": "Livres (100 docs)"},
+                    {"name": "recettes", "extended": True, "label": "Recettes étendu (200 docs)"},
+                    {"name": "films", "extended": True, "label": "Films étendu (200 docs)"},
+                    {"name": "wikipedia", "extended": False, "label": "Wikipedia (100 docs)"},
+                    {"name": "livres", "extended": True, "label": "Livres étendu (801 docs)"},
+                    {"name": "wikipedia", "extended": True, "label": "Wikipedia étendu (1000 docs)"},
+                ]
+            else:
+                # Mode rapide: seulement les datasets normaux
+                benchmark_tests = [
+                    {"name": "recettes", "extended": False, "label": "Recettes (50 docs)"},
+                    {"name": "films", "extended": False, "label": "Films (50 docs)"},
+                    {"name": "livres", "extended": False, "label": "Livres (100 docs)"},
+                    {"name": "wikipedia", "extended": False, "label": "Wikipedia (100 docs)"},
+                ]
 
             results = []
 
@@ -1769,9 +1806,13 @@ def render_tfidf_performance(
 
                     **💡 Observation:**
 
-                    La ligne rouge montre la tendance **linéaire** → confirme la complexité O(n)!
+                    La ligne rouge montre la tendance **linéaire** → confirme la complexité O(n×m)!
 
-                    Plus il y a de documents, plus ça prend de temps **proportionnellement**.
+                    **Impact de la taille:**
+                    - Passer de 50 à 200 docs → ~4× plus lent
+                    - Passer de 100 à 1000 docs → ~10× plus lent
+
+                    C'est **proportionnel** au nombre de documents!
                     """)
 
                 st.success("""
@@ -1779,10 +1820,12 @@ def render_tfidf_performance(
 
                 TF-IDF est **rapide et scalable** pour des corpus de taille petite à moyenne!
 
-                - **< 100 docs:** Quasi instantané ⚡
-                - **100-1000 docs:** Très rapide (< 1s) 🚀
-                - **1000-10000 docs:** Rapide (1-10s) 👌
-                - **> 10000 docs:** Optimisations recommandées (index inversé, etc.)
+                - **50-100 docs:** Quasi instantané (< 0.1s) ⚡
+                - **200 docs:** Très rapide (< 0.2s) 🚀
+                - **800-1000 docs:** Rapide (< 1s) 👌
+                - **> 10000 docs:** Optimisations recommandées (index inversé, cache, etc.)
+
+                **💡 À retenir:** La croissance est **linéaire** → prévisible et fiable!
                 """)
 
     st.divider()
