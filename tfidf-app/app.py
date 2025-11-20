@@ -345,9 +345,21 @@ def render_datasets_section(dataset_name: str, use_extended: bool):
 
         df = pd.DataFrame(table_data)
 
-        # Afficher le tableau (sans la colonne _full_doc)
+        # Afficher le tableau interactif (sans la colonne _full_doc)
         df_display = df.drop(columns=["_full_doc"])
-        st.dataframe(df_display, use_container_width=True, hide_index=True, height=400)
+
+        st.info("💡 **Clique sur une ligne du tableau pour voir les détails!**", icon="💡")
+
+        # Tableau interactif avec sélection
+        event = st.dataframe(
+            df_display,
+            use_container_width=True,
+            hide_index=True,
+            height=400,
+            on_select="rerun",
+            selection_mode="single-row",
+            key=f"dataset_table_page_{st.session_state.dataset_page}"
+        )
 
         # Contrôles de pagination
         col_prev, col_info, col_next = st.columns([1, 2, 1])
@@ -378,15 +390,12 @@ def render_datasets_section(dataset_name: str, use_extended: bool):
 
         st.markdown("---")
 
-        # Sélection d'un document pour voir les détails
-        st.subheader("🔍 Inspecter un Document")
+        # Détection de la sélection via le clic sur une ligne
+        selected_doc_idx = None
+        if event.selection and "rows" in event.selection and len(event.selection["rows"]) > 0:
+            selected_doc_idx = event.selection["rows"][0]
 
-        selected_doc_idx = st.selectbox(
-            "Sélectionne un document de la page actuelle:",
-            range(len(current_page_docs)),
-            format_func=lambda i: f"[{start_idx + i + 1}] {current_page_docs[i]['title'][:60]}",
-        )
-
+        # Afficher les détails si une ligne est sélectionnée
         if selected_doc_idx is not None:
             doc = current_page_docs[selected_doc_idx]
 

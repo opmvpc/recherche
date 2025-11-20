@@ -20,6 +20,7 @@ from src.visualizations import (
     plot_search_results,
     plot_documents_3d,
     plot_vocabulary_stats,
+    plot_cosine_similarity_search,
 )
 
 
@@ -657,78 +658,28 @@ def render_tfidf_concepts(engine, documents_titles):
 
         st.latex(r"\text{cos}(\theta) = \frac{A \cdot B}{\|A\| \times \|B\|}")
 
-        # Graphique pour visualiser l'angle
-        col_graph, col_exp = st.columns([1, 1])
+        # Graphique amélioré pour visualiser la recherche par similarité
+        st.markdown("### 📊 Visualisation: Recherche du Document le Plus Proche")
 
-        with col_graph:
-            import matplotlib.pyplot as plt
-            import numpy as np
+        fig_cosine = plot_cosine_similarity_search(num_docs=5, query_angle=30, seed=42)
+        st.pyplot(fig_cosine)
 
-            # Créer deux vecteurs exemple
-            vec_A = np.array([3, 4])
-            vec_B = np.array([4, 2])
+        import matplotlib.pyplot as plt
+        plt.close()
 
-            # Calculer l'angle
-            cos_angle = np.dot(vec_A, vec_B) / (np.linalg.norm(vec_A) * np.linalg.norm(vec_B))
-            angle_deg = np.degrees(np.arccos(cos_angle))
+        st.markdown("""
+        **🎯 Comment lire ce graphique:**
 
-            fig, ax = plt.subplots(figsize=(5, 5))
+        - **Query (vert)** = Ta recherche (ex: "plat italien fromage")
+        - **Documents (colorés)** = Docs du corpus avec leurs scores de similarité
+        - **🎯 Or** = Le document **le plus proche** (angle le plus petit!)
+        - **Angle θ (rouge)** = Angle entre query et meilleur doc
 
-            # Origine
-            origin = np.array([0, 0])
-
-            # Dessiner les vecteurs
-            ax.quiver(*origin, *vec_A, angles='xy', scale_units='xy', scale=1,
-                     color='#1f77b4', width=0.01, label=f'Vecteur A (Doc)', linewidth=2)
-            ax.quiver(*origin, *vec_B, angles='xy', scale_units='xy', scale=1,
-                     color='#2ca02c', width=0.01, label=f'Vecteur B (Query)', linewidth=2)
-
-            # Dessiner l'arc de l'angle
-            angle_arc = np.linspace(0, np.arctan2(vec_B[1], vec_B[0]), 50)
-            radius = 1.5
-            ax.plot(radius * np.cos(angle_arc), radius * np.sin(angle_arc),
-                   'r--', linewidth=2, label=f'Angle θ = {angle_deg:.1f}°')
-
-            # Annotations
-            ax.text(vec_A[0]/2, vec_A[1]/2 + 0.3, 'A', fontsize=14, fontweight='bold', color='#1f77b4')
-            ax.text(vec_B[0]/2 + 0.3, vec_B[1]/2, 'B', fontsize=14, fontweight='bold', color='#2ca02c')
-            ax.text(1.0, 0.5, f'θ', fontsize=16, fontweight='bold', color='red')
-
-            # Configuration
-            ax.set_xlim(-1, 5)
-            ax.set_ylim(-1, 5)
-            ax.set_aspect('equal')
-            ax.grid(True, alpha=0.3)
-            ax.axhline(y=0, color='k', linewidth=0.5)
-            ax.axvline(x=0, color='k', linewidth=0.5)
-            ax.legend(loc='upper left', fontsize=9)
-            ax.set_title('Similarité Cosinus = Angle entre Vecteurs', fontsize=11, fontweight='bold')
-            ax.set_xlabel('Dimension 1', fontsize=10)
-            ax.set_ylabel('Dimension 2', fontsize=10)
-
-            plt.tight_layout()
-            st.pyplot(fig)
-            plt.close()
-
-        with col_exp:
-            st.markdown(f"""
-            **📊 Exemple Visuel:**
-
-            - **Vecteur A** (bleu) = Document
-            - **Vecteur B** (vert) = Query
-            - **Angle θ** (rouge) = {angle_deg:.1f}°
-
-            **Calcul:**
-            - A · B = {np.dot(vec_A, vec_B):.1f}
-            - ||A|| = {np.linalg.norm(vec_A):.2f}
-            - ||B|| = {np.linalg.norm(vec_B):.2f}
-            - cos(θ) = **{cos_angle:.3f}**
-
-            **Interprétation:**
-            - Plus l'angle est **petit**
-            - Plus les vecteurs sont **proches**
-            - Plus les documents sont **similaires**! 🎯
-            """)
+        **💡 Observations:**
+        - Plus l'angle est **petit** → Plus le document est **similaire** ✅
+        - Plus l'angle est **grand** → Plus le document est **différent** ❌
+        - Les couleurs indiquent la qualité du match (vert = excellent, rouge = mauvais)
+        """)
 
         st.markdown("""
         **Composantes:**

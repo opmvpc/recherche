@@ -7,18 +7,18 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import time as time_module  # Renamed to avoid conflict
+import matplotlib.pyplot as plt
 
 # Imports from src
 from src.bm25_engine import BM25Engine
 from src.tfidf_engine import TFIDFEngine
 from src.visualizations import (
     plot_search_results,
-    # Note: Visualizations BM25 spécifiques commentées car non implémentées
-    # plot_saturation_effect,
-    # plot_length_normalization,
-    # plot_parameter_space_heatmap,
-    # plot_tfidf_bm25_comparison,
-    # plot_score_distributions,
+    plot_saturation_effect,
+    plot_length_normalization,
+    plot_parameter_space_heatmap,
+    plot_tfidf_bm25_comparison,
+    plot_score_distributions,
 )
 
 
@@ -164,8 +164,10 @@ def render_bm25_intro():
         col_g1, col_g2 = st.columns(2)
 
         with col_g1:
-            # Note: Visualisation à implémenter
-            st.info("📊 Graphique de saturation (à implémenter)")
+            # Graphique de saturation TF-IDF vs BM25
+            fig_saturation = plot_saturation_effect(k1_values=[0.5, 1.2, 1.5, 2.0], max_freq=50)
+            st.pyplot(fig_saturation)
+            plt.close()
 
         with col_g2:
             st.markdown("""
@@ -1942,8 +1944,16 @@ def render_bm25_comparison(
             col_g1, col_g2 = st.columns(2)
 
             with col_g1:
-                # Note: Visualisation à implémenter
-                st.info("📊 Graphique de comparaison TF-IDF vs BM25 - À implémenter")
+                # Graphique de comparaison TF-IDF vs BM25
+                fig_comparison = plot_tfidf_bm25_comparison(
+                    tfidf_results,
+                    bm25_results,
+                    documents_titles,
+                    query_compare,
+                    top_k=top_k_compare
+                )
+                st.pyplot(fig_comparison)
+                plt.close()
 
             with col_g2:
                 st.markdown("### 📊 Analyse du Graphique")
@@ -2025,8 +2035,10 @@ def render_bm25_comparison(
             col_dist1, col_dist2 = st.columns(2)
 
             with col_dist1:
-                # Note: Visualisation à implémenter
-                st.info("📊 Histogrammes de distribution des scores - À implémenter")
+                # Histogrammes de distribution des scores
+                fig_distributions = plot_score_distributions(tfidf_scores, bm25_scores)
+                st.pyplot(fig_distributions)
+                plt.close()
 
             with col_dist2:
                 st.markdown("### 📈 Interprétation")
