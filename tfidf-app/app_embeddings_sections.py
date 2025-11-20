@@ -87,7 +87,6 @@ def render_embeddings_section(
         "⚔️ Comparaison",
         "🎨 Hybrid",
         "⚡ Performance",
-        "🚀 Recommandations",
     ]
     tab = render_tab_navigation(
         tabs_list, "embeddings_tabs", default_tab="📖 Introduction"
@@ -132,8 +131,6 @@ def render_embeddings_section(
         render_embeddings_performance(
             embedding_engine, documents_texts, tfidf_engine, bm25_engine
         )
-    elif tab == "🚀 Recommandations":
-        render_embeddings_recommendations()
 
 
 def render_embeddings_intro(documents_texts, tfidf_engine):
@@ -628,6 +625,242 @@ Non-zéros: 384 (100%)
         - BERT: "banque" a un vecteur **différent** selon le contexte! ✨
         """)
 
+    with st.expander("📊 **Anatomie d'un Vecteur d'Embedding**"):
+        st.markdown(f"""
+        ### 🔬 Qu'y a-t-il dans un Vecteur?
+
+        Un embedding de `{embedding_engine.embedding_dim}` dimensions, c'est quoi concrètement?
+        Prenons un exemple réel!
+        """)
+
+        # Générer un embedding d'exemple
+        sample_text = "Le chat noir mange du poisson"
+        sample_embedding = embedding_engine.model.encode([sample_text])[0]
+
+        col_graph, col_analysis = st.columns([3, 2])
+
+        with col_graph:
+            import matplotlib.pyplot as plt
+            import numpy as np
+
+            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
+
+            # Graphique 1: Distribution des valeurs
+            ax1.hist(
+                sample_embedding, bins=50, color="#3498db", alpha=0.7, edgecolor="black"
+            )
+            ax1.axvline(x=0, color="red", linestyle="--", linewidth=2, label="Zéro")
+            ax1.axvline(
+                x=np.mean(sample_embedding),
+                color="green",
+                linestyle="--",
+                linewidth=2,
+                label=f"Moyenne ({np.mean(sample_embedding):.3f})",
+            )
+            ax1.set_xlabel("Valeur de la dimension", fontsize=11, fontweight="bold")
+            ax1.set_ylabel("Nombre de dimensions", fontsize=11, fontweight="bold")
+            ax1.set_title(
+                f"Distribution des {embedding_engine.embedding_dim} dimensions",
+                fontsize=12,
+                fontweight="bold",
+            )
+            ax1.legend(fontsize=10)
+            ax1.grid(True, alpha=0.3)
+
+            # Graphique 2: Échantillon des premières dimensions
+            n_show = 50
+            dims = np.arange(n_show)
+            values = sample_embedding[:n_show]
+            colors = ["#2ecc71" if v > 0 else "#e74c3c" for v in values]
+
+            ax2.bar(
+                dims, values, color=colors, alpha=0.7, edgecolor="black", linewidth=0.5
+            )
+            ax2.axhline(y=0, color="black", linestyle="-", linewidth=1)
+            ax2.set_xlabel("Index de la dimension", fontsize=11, fontweight="bold")
+            ax2.set_ylabel("Valeur", fontsize=11, fontweight="bold")
+            ax2.set_title(
+                f"Valeurs des {n_show} premières dimensions (vert=positif, rouge=négatif)",
+                fontsize=11,
+                fontweight="bold",
+            )
+            ax2.grid(True, alpha=0.3, axis="y")
+
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close()
+
+        with col_analysis:
+            st.markdown(f"""
+            ### 📈 Analyse du Vecteur
+
+            **Texte analysé:**
+            > "{sample_text}"
+
+            **Statistiques:**
+            - **Dimensions:** {embedding_engine.embedding_dim}
+            - **Valeur min:** {np.min(sample_embedding):.3f}
+            - **Valeur max:** {np.max(sample_embedding):.3f}
+            - **Moyenne:** {np.mean(sample_embedding):.3f}
+            - **Écart-type:** {np.std(sample_embedding):.3f}
+
+            **💡 Observations:**
+
+            📊 **Graphique du haut:**
+            - Distribution ~normale centrée autour de 0
+            - Valeurs entre -1 et +1 (typique)
+            - Pas de zéros → Dense! ✅
+
+            📊 **Graphique du bas:**
+            - Alternance positif/négatif
+            - Chaque dimension = "concept"
+            - Ex: Dim #12 = "animal"?
+            - Ex: Dim #37 = "action"?
+
+            **🧠 Chaque dimension capture:**
+            - Syntaxe (nom, verbe, etc.)
+            - Sémantique (animal, nourriture)
+            - Relations (agent, patient)
+            - Contexte culturel/linguistique
+
+            C'est cette richesse qui permet la recherche sémantique! 🎯
+            """)
+
+    with st.expander("🔗 **Similarité Sémantique: Voir les Relations**"):
+        st.markdown("""
+        ### 🎯 Comment les Embeddings Capturent les Relations?
+
+        Générons des embeddings pour plusieurs phrases et comparons-les!
+        """)
+
+        # Phrases d'exemple avec relations sémantiques
+        example_phrases = [
+            "Le chat mange du poisson",
+            "Un chien dévore de la viande",
+            "L'ordinateur calcule des nombres",
+            "La voiture roule sur la route",
+            "Le poisson nage dans l'eau",
+            "Un félin chasse une souris",
+        ]
+
+        # Calculer les embeddings
+        embeddings_matrix = embedding_engine.model.encode(example_phrases)
+
+        # Calculer la matrice de similarité cosinus
+        from sklearn.metrics.pairwise import cosine_similarity
+
+        similarity_matrix = cosine_similarity(embeddings_matrix)
+
+        col_heatmap, col_explanation = st.columns([3, 2])
+
+        with col_heatmap:
+            import matplotlib.pyplot as plt
+
+            fig, ax = plt.subplots(figsize=(10, 8))
+
+            # Heatmap
+            im = ax.imshow(
+                similarity_matrix, cmap="RdYlGn", vmin=0, vmax=1, aspect="auto"
+            )
+
+            # Axes
+            ax.set_xticks(np.arange(len(example_phrases)))
+            ax.set_yticks(np.arange(len(example_phrases)))
+
+            # Labels courts pour l'affichage
+            short_labels = [
+                "Chat/poisson",
+                "Chien/viande",
+                "Ordi/calcul",
+                "Voiture/route",
+                "Poisson/eau",
+                "Félin/souris",
+            ]
+
+            ax.set_xticklabels(short_labels, rotation=45, ha="right", fontsize=9)
+            ax.set_yticklabels(short_labels, fontsize=9)
+
+            # Annotations des valeurs
+            for i in range(len(example_phrases)):
+                for j in range(len(example_phrases)):
+                    value = similarity_matrix[i, j]
+                    color = "white" if value > 0.7 else "black"
+                    ax.text(
+                        j,
+                        i,
+                        f"{value:.2f}",
+                        ha="center",
+                        va="center",
+                        color=color,
+                        fontsize=9,
+                        fontweight="bold",
+                    )
+
+            ax.set_title(
+                "Heatmap de Similarité Cosinus (Embeddings)",
+                fontsize=13,
+                fontweight="bold",
+                pad=15,
+            )
+
+            # Colorbar
+            cbar = plt.colorbar(im, ax=ax)
+            cbar.set_label("Similarité (0=différent, 1=identique)", fontsize=10)
+
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close()
+
+        with col_explanation:
+            st.markdown("""
+            ### 🔍 Lecture de la Heatmap
+
+            **Couleurs:**
+            - 🟢 **Vert foncé:** Très similaire (~0.8-1.0)
+            - 🟡 **Jaune:** Similaire (~0.5-0.8)
+            - 🔴 **Rouge:** Peu similaire (~0.0-0.5)
+
+            **💡 Observations Clés:**
+
+            **Diagonale = 1.00 (vert):**
+            - Chaque phrase comparée à elle-même
+            - Similarité parfaite ✅
+
+            **Relations sémantiques détectées:**
+            """)
+
+            # Trouver les paires les plus similaires (hors diagonale)
+            similarity_no_diag = similarity_matrix.copy()
+            np.fill_diagonal(similarity_no_diag, 0)
+
+            # Top 3 paires
+            flat_indices = np.argsort(similarity_no_diag.ravel())[::-1][:3]
+            top_pairs = [
+                (i // len(example_phrases), i % len(example_phrases))
+                for i in flat_indices
+            ]
+
+            for rank, (i, j) in enumerate(top_pairs, 1):
+                sim = similarity_matrix[i, j]
+                st.success(f"""
+                **#{rank} - Similarité: {sim:.3f}**
+                - "{example_phrases[i][:30]}..."
+                - "{example_phrases[j][:30]}..."
+                """)
+
+            st.markdown("""
+            **🧠 Pourquoi ces relations?**
+
+            Le modèle a appris que:
+            - "chat" ≈ "chien" ≈ "félin" (animaux)
+            - "mange" ≈ "dévore" ≈ "chasse" (actions)
+            - "poisson" apparaît 2× (sujet et objet!)
+
+            **⚠️ Notez bien:**
+            - Phrases sans mots communs peuvent être similaires!
+            - C'est la **sémantique**, pas le lexique!
+            """)
+
     with st.expander("📚 **Comment le Réseau Apprend (Pré-entraînement)**"):
         st.markdown("""
         ### Masked Language Modeling (MLM)
@@ -833,6 +1066,200 @@ Non-zéros: 384 (100%)
         **Analogie:**
         - Tu n'as pas besoin de comprendre comment fonctionne chaque neurone de ton cerveau
         - Ce qui compte c'est que tu puisses reconnaître un chat! 🐱
+        """)
+
+    with st.expander("⚔️ **Battle: TF-IDF vs Embeddings**"):
+        st.markdown("""
+        ### 🥊 Le Test Ultime: Comprendre la Différence
+
+        Prenons des **paires de phrases** et comparons les similarités selon:
+        - **Approche Lexicale** (TF-IDF) → Compte les mots communs
+        - **Approche Sémantique** (Embeddings) → Comprend le sens
+        """)
+
+        # Paires de test
+        test_pairs = [
+            ("Un chat noir dort", "Le félin sombre se repose", "Synonymes parfaits"),
+            (
+                "Je cuisine un plat italien",
+                "Je prépare une recette de pâtes",
+                "Même sujet",
+            ),
+            (
+                "Paris est belle",
+                "La capitale française est magnifique",
+                "Référence identique",
+            ),
+            ("Le chien aboie fort", "La table est en bois", "Aucun rapport"),
+            ("J'adore la programmation", "Je déteste coder", "Contraires"),
+            ("Voiture rapide rouge", "Automobile véloce écarlate", "Synonymes exacts"),
+        ]
+
+        # Calculer les similarités
+        results_data = []
+
+        for phrase1, phrase2, description in test_pairs:
+            # Embedding similarity
+            emb1, emb2 = embedding_engine.model.encode([phrase1, phrase2])
+            emb_sim = np.dot(emb1, emb2) / (np.linalg.norm(emb1) * np.linalg.norm(emb2))
+
+            # TF-IDF similarity (approximation simple avec Jaccard sur les mots)
+            words1 = set(phrase1.lower().split())
+            words2 = set(phrase2.lower().split())
+            if len(words1.union(words2)) > 0:
+                jaccard_sim = len(words1.intersection(words2)) / len(
+                    words1.union(words2)
+                )
+            else:
+                jaccard_sim = 0.0
+
+            results_data.append(
+                {
+                    "Description": description,
+                    "TF-IDF (lexical)": jaccard_sim,
+                    "Embeddings (sémantique)": emb_sim,
+                    "Différence": abs(emb_sim - jaccard_sim),
+                }
+            )
+
+        # Graphique comparatif
+        col_graph, col_analysis = st.columns([3, 2])
+
+        with col_graph:
+            import matplotlib.pyplot as plt
+
+            fig, ax = plt.subplots(figsize=(10, 7))
+
+            x_pos = np.arange(len(results_data))
+            width = 0.35
+
+            tfidf_scores = [d["TF-IDF (lexical)"] for d in results_data]
+            emb_scores = [d["Embeddings (sémantique)"] for d in results_data]
+            labels = [d["Description"] for d in results_data]
+
+            # Barres
+            ax.barh(
+                x_pos - width / 2,
+                tfidf_scores,
+                width,
+                label="TF-IDF (lexical)",
+                color="#3498db",
+                alpha=0.8,
+                edgecolor="black",
+            )
+            ax.barh(
+                x_pos + width / 2,
+                emb_scores,
+                width,
+                label="Embeddings (sémantique)",
+                color="#2ecc71",
+                alpha=0.8,
+                edgecolor="black",
+            )
+
+            # Annotations
+            for i, (tf, emb) in enumerate(zip(tfidf_scores, emb_scores)):
+                ax.text(
+                    tf + 0.02,
+                    i - width / 2,
+                    f"{tf:.2f}",
+                    va="center",
+                    fontsize=9,
+                    fontweight="bold",
+                )
+                ax.text(
+                    emb + 0.02,
+                    i + width / 2,
+                    f"{emb:.2f}",
+                    va="center",
+                    fontsize=9,
+                    fontweight="bold",
+                )
+
+            ax.set_yticks(x_pos)
+            ax.set_yticklabels(labels, fontsize=10)
+            ax.set_xlabel(
+                "Score de Similarité (0=différent, 1=identique)",
+                fontsize=11,
+                fontweight="bold",
+            )
+            ax.set_title(
+                "Comparaison: TF-IDF vs Embeddings",
+                fontsize=13,
+                fontweight="bold",
+                pad=15,
+            )
+            ax.legend(fontsize=10, loc="lower right")
+            ax.grid(True, alpha=0.3, axis="x")
+            ax.set_xlim(0, 1.1)
+
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close()
+
+        with col_analysis:
+            st.markdown("""
+            ### 🔍 Analyse des Résultats
+
+            **Paires critiques:**
+            """)
+
+            # Trouver les cas où embeddings >> TF-IDF
+            for data in results_data:
+                if data["Embeddings (sémantique)"] > data["TF-IDF (lexical)"] + 0.2:
+                    st.success(f"""
+                    **{data["Description"]}**
+                    - TF-IDF: {data["TF-IDF (lexical)"]:.2f}
+                    - Embeddings: {data["Embeddings (sémantique)"]:.2f}
+                    - ✅ Embeddings gagne!
+                    """)
+
+            st.markdown("""
+            ---
+
+            **💡 Ce que ça montre:**
+
+            **Cas "Synonymes parfaits":**
+            - Phrases signifient la MÊME chose
+            - TF-IDF: ~0.0 (aucun mot commun!)
+            - Embeddings: ~0.8 (sens identique!) ✨
+
+            **Cas "Contraires":**
+            - "adore" vs "déteste" → opposés
+            - TF-IDF: Pense que c'est similaire
+            - Embeddings: Détecte l'opposition! 🎯
+
+            **Cas "Aucun rapport":**
+            - Les deux méthodes concordent
+            - Peu de mots communs = peu de sens commun
+
+            ---
+
+            **🏆 Verdict:**
+
+            **TF-IDF:**
+            - Bon pour correspondance exacte
+            - Rapide et simple
+            - Limité au lexique
+
+            **Embeddings:**
+            - Comprend les synonymes ✅
+            - Capture le sens profond ✅
+            - Détecte les nuances ✅
+            - **Mais:** Plus lent et complexe
+            """)
+
+        st.divider()
+
+        st.info("""
+        **🎓 Conclusion Pédagogique**
+
+        Les embeddings ne sont PAS magiques! Ils ont simplement appris à:
+        1. Reconnaître que "chat" et "félin" sont liés (via des milliards d'exemples)
+        2. Placer ces mots proches dans l'espace vectoriel
+        3. Étendre cette logique à des phrases entières
+
+        **Résultat:** Recherche sémantique = comprendre l'intention, pas juste les mots! 🚀
         """)
 
 
@@ -1691,371 +2118,3 @@ def render_embeddings_performance(
         embeddings = pickle.load(f)
     ```
     """)
-
-
-def render_embeddings_recommendations():
-    """Section Recommandations pour le projet"""
-    st.header("🚀 Recommandations pour Votre Projet")
-
-    st.markdown("""
-    Vous êtes en train de développer votre projet web! Voici comment **intégrer des embeddings dans votre application** de manière professionnelle et économique. 💼
-    """)
-
-    st.divider()
-
-    # === OPENROUTER ===
-    st.markdown("## 🌐 Option 1: API Embeddings avec OpenRouter")
-
-    st.markdown("""
-    **Pourquoi OpenRouter?**
-    - 🚀 **Rapide:** Exécution sur GPU professionnel
-    - 💰 **Pas cher:** À partir de $0.005/M tokens
-    - 🎯 **Qualité supérieure:** Modèles optimisés et maintenus
-    - 🔧 **Simple:** API REST standard, pas de setup serveur
-    - 🌍 **Scalable:** Gère automatiquement la montée en charge
-    """)
-
-    st.markdown("### 📊 Modèles Disponibles (Sélection)")
-
-    # Tableau des modèles avec prix
-    models_data = [
-        {
-            "Modèle": "all-MiniLM-L6-v2",
-            "Dimensions": 384,
-            "Contexte": "512 tokens",
-            "Prix": "$0.005/M",
-            "Cas d'usage": "Léger, rapide",
-        },
-        {
-            "Modèle": "all-MiniLM-L12-v2",
-            "Dimensions": 384,
-            "Contexte": "512 tokens",
-            "Prix": "$0.005/M",
-            "Cas d'usage": "Équilibré",
-        },
-        {
-            "Modèle": "all-mpnet-base-v2",
-            "Dimensions": 768,
-            "Contexte": "512 tokens",
-            "Prix": "$0.005/M",
-            "Cas d'usage": "Haute qualité",
-        },
-        {
-            "Modèle": "bge-base-en-v1.5",
-            "Dimensions": 768,
-            "Contexte": "512 tokens",
-            "Prix": "$0.005/M",
-            "Cas d'usage": "Retrieval",
-        },
-        {
-            "Modèle": "multilingual-e5-large",
-            "Dimensions": 1024,
-            "Contexte": "512 tokens",
-            "Prix": "$0.01/M",
-            "Cas d'usage": "Multilingue",
-        },
-        {
-            "Modèle": "bge-m3",
-            "Dimensions": 1024,
-            "Contexte": "8K tokens",
-            "Prix": "$0.01/M",
-            "Cas d'usage": "Longs docs",
-        },
-        {
-            "Modèle": "OpenAI ada-002",
-            "Dimensions": 1536,
-            "Contexte": "8K tokens",
-            "Prix": "$0.10/M",
-            "Cas d'usage": "Référence",
-        },
-        {
-            "Modèle": "OpenAI text-3-large",
-            "Dimensions": 3072,
-            "Contexte": "8K tokens",
-            "Prix": "$0.13/M",
-            "Cas d'usage": "Top qualité",
-        },
-    ]
-
-    df_models = pd.DataFrame(models_data)
-    st.dataframe(df_models, use_container_width=True, hide_index=True)
-
-    st.divider()
-
-    # === CALCUL DE COÛT ===
-    st.markdown("### 💰 Calcul de Coût: C'est VRAIMENT Pas Cher!")
-
-    st.markdown("""
-    **Exemple concret:** Embedder **TOUS les livres Harry Potter + La Bible**
-    """)
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.metric("📚 Corpus complet", "~2.5 millions de mots")
-        st.metric("🔢 Tokens (approx)", "~3.3M tokens")
-        st.metric("📊 Nombre de documents", "~10,000 chunks")
-
-    with col2:
-        st.metric("💵 Coût (MiniLM)", "$0.016")
-        st.metric("💵 Coût (MPNet)", "$0.016")
-        st.metric("💵 Coût (E5-Large)", "$0.033")
-
-    st.success("""
-    ✅ **Résultat:** Même les 7 livres Harry Potter + la Bible = **moins de 5 centimes**!
-
-    Pour votre projet étudiant avec quelques centaines/milliers de documents: **~$0.001 à $0.01**
-    → Moins qu'un café! ☕
-    """)
-
-    st.info("""
-    💡 **Astuce:**
-    - Embedder **une seule fois** au début (indexation)
-    - Stocker les embeddings dans votre DB
-    - Embedder **seulement la query** à chaque recherche (~0.0001¢ par recherche)
-
-    **Coût réel en prod:** Négligeable! 🎉
-    """)
-
-    st.divider()
-
-    # === COMPARAISON LOCAL VS API ===
-    st.markdown("### ⚖️ Local vs API: Comparaison")
-
-    comparison_data = {
-        "Critère": [
-            "Qualité",
-            "Vitesse",
-            "Setup",
-            "Coût initial",
-            "Coût usage",
-            "Maintenance",
-            "GPU requis",
-            "Scalabilité",
-        ],
-        "Local (CPU)": [
-            "✅ Bon",
-            "🐌 Lent (1-10s)",
-            "😰 Complexe",
-            "💰 Gratuit",
-            "💵 Électricité",
-            "🔧 À faire",
-            "❌ Non",
-            "⚠️ Limitée",
-        ],
-        "Local (GPU)": [
-            "✅✅ Excellent",
-            "⚡ Rapide (0.1s)",
-            "😱 Très complexe",
-            "💰💰💰 Cher",
-            "💵💵 Électricité",
-            "🔧🔧 Maintenance",
-            "✅ Oui (CUDA)",
-            "⚠️ Limitée",
-        ],
-        "API (OpenRouter)": [
-            "✅✅ Excellent",
-            "⚡⚡ Très rapide",
-            "😊 Simple",
-            "💰 Gratuit",
-            "💵 ~$0.005/M",
-            "✨ Aucune",
-            "☁️ Géré",
-            "🚀 Illimitée",
-        ],
-    }
-
-    df_comparison = pd.DataFrame(comparison_data)
-    st.dataframe(df_comparison, use_container_width=True, hide_index=True)
-
-    st.divider()
-
-    # === OUTILS ET PLATEFORMES ===
-    st.markdown("## 🛠️ Outils et Plateformes Recommandés")
-
-    col_tool1, col_tool2 = st.columns(2)
-
-    with col_tool1:
-        st.markdown("""
-        ### 🗄️ Vector Databases
-
-        **LanceDB** 🏆
-        - 📦 Self-hosted ou cloud
-        - 🚀 Ultra rapide (Rust)
-        - 💾 Fichiers locaux ou S3
-        - 🐍 API Python simple
-        - 💰 Gratuit (self-hosted)
-
-        ```python
-        import lancedb
-
-        db = lancedb.connect("./data/vectors")
-        table = db.create_table("docs",
-                                data=embeddings)
-
-        # Recherche
-        results = table.search(query_vec)
-                      .limit(10)
-                      .to_list()
-        ```
-        """)
-
-    with col_tool2:
-        st.markdown("""
-        ### 🐘 PostgreSQL + pgvector
-
-        **Extension pgvector** 🎯
-        - 🗄️ DB que vous connaissez déjà!
-        - 🔧 Extension simple à installer
-        - 💼 Production-ready
-        - 🔗 Combine vecteurs + données SQL
-
-        ```sql
-        CREATE EXTENSION vector;
-
-        CREATE TABLE documents (
-          id SERIAL PRIMARY KEY,
-          content TEXT,
-          embedding vector(384)
-        );
-
-        -- Recherche par similarité
-        SELECT * FROM documents
-        ORDER BY embedding <-> $1
-        LIMIT 10;
-        ```
-        """)
-
-    st.markdown("""
-    ### 📚 Autres options populaires:
-    - **Pinecone:** Cloud, très simple, gratuit jusqu'à 1M vecteurs
-    - **Weaviate:** Open-source, features riches (filtres, hybrid search)
-    - **Qdrant:** Rust, performant, filtres avancés
-    - **Milvus:** Enterprise-grade, très scalable
-    """)
-
-    st.divider()
-
-    # === CAS D'USAGE POUR LE PROJET ===
-    st.markdown("## 💼 Cas d'Usage pour Votre Projet")
-
-    use_cases = [
-        {
-            "icon": "💬",
-            "title": "Recherche dans Conversations",
-            "desc": "Retrouver des messages par sens (pas seulement mots-clés)",
-            "example": "Query: 'bug de connexion' → Trouve: 'je peux plus me logger'",
-        },
-        {
-            "icon": "📄",
-            "title": "Base de Docs/Knowledge Base",
-            "desc": "Recherche sémantique dans documentation, FAQs, wikis",
-            "example": "Query: 'comment reset mdp?' → Trouve docs sur réinitialisation",
-        },
-        {
-            "icon": "🛍️",
-            "title": "Recherche Produits E-commerce",
-            "desc": "Recommandations basées sur descriptions similaires",
-            "example": "Query: 'chaussures confort été' → Trouve sandales légères",
-        },
-        {
-            "icon": "📧",
-            "title": "Emails / Tickets Support",
-            "desc": "Classer et retrouver tickets similaires automatiquement",
-            "example": "Nouveau ticket → Suggère solutions de tickets similaires passés",
-        },
-        {
-            "icon": "📰",
-            "title": "Articles / Blog",
-            "desc": "Recommander articles similaires, clustering de contenus",
-            "example": "'Articles liés' basés sur vraie similarité de contenu",
-        },
-    ]
-
-    for uc in use_cases:
-        with st.expander(f"{uc['icon']} {uc['title']}"):
-            st.markdown(f"**Description:** {uc['desc']}")
-            st.info(f"**Exemple:** {uc['example']}")
-
-    st.divider()
-
-    # === RAG (TEASER) ===
-    st.markdown("## 🎓 Et Après? RAG (Retrieval-Augmented Generation)")
-
-    st.markdown("""
-    Les embeddings sont la **base des systèmes RAG** (Retrieval-Augmented Generation):
-
-    **Principe:**
-    1. 🔍 **Recherche** (embeddings) → Trouver les docs pertinents
-    2. 📄 **Context** → Injecter ces docs dans le prompt
-    3. 🤖 **Generation** (LLM) → Générer une réponse basée sur VOS données
-
-    **Exemple:**
-    ```
-    User: "Quelle est notre politique de remboursement?"
-
-    → [Embeddings] Trouve les 3 docs les plus pertinents
-    → [LLM] Génère réponse basée sur CES docs (pas hallucination!)
-    ```
-
-    **Applications:**
-    - 💬 Chatbots sur vos données
-    - 📚 Q&A sur documentation
-    - 📧 Assistants customer support
-    - 🧑‍💼 Analyse de documents légaux/contractuels
-    """)
-
-    st.success("""
-    🎓 **On verra les RAG en détail dans un prochain cours!**
-
-    Mais vous avez maintenant **toutes les bases** pour:
-    - Comprendre comment ça marche
-    - Implémenter votre propre système de recherche sémantique
-    - L'intégrer dans votre projet web
-    - Calculer les coûts et choisir la bonne solution
-    """)
-
-    st.divider()
-
-    # === CHECKLIST PROJET ===
-    st.markdown("## ✅ Checklist pour Votre Projet")
-
-    st.markdown("""
-    **Pour intégrer des embeddings dans votre app:**
-
-    1. ✅ **Choisir un modèle:**
-       - Petit projet: `all-MiniLM-L6-v2` (384 dim, rapide)
-       - Projet moyen: `all-mpnet-base-v2` (768 dim, qualité)
-       - Multilingue: `multilingual-e5-large` (1024 dim)
-
-    2. ✅ **Choisir l'hébergement:**
-       - Prototype: Local (gratuit, ok pour < 10k docs)
-       - Production: OpenRouter API ($0.005/M tokens)
-
-    3. ✅ **Choisir la vector DB:**
-       - Simple: PostgreSQL + pgvector (vous connaissez déjà!)
-       - Avancé: LanceDB (self-hosted, très rapide)
-       - Cloud: Pinecone (gratuit jusqu'à 1M vecteurs)
-
-    4. ✅ **Implémenter:**
-       - Indexer vos docs (1× au départ)
-       - Stocker embeddings dans DB
-       - API de recherche: embedder query + similarity search
-
-    5. ✅ **Optimiser:**
-       - Cache les embeddings fréquents
-       - Batch les requêtes d'indexation
-       - Filtres pré-recherche (catégories, dates) pour réduire l'espace
-    """)
-
-    st.balloons()
-
-    st.success("""
-    🚀 **Vous avez maintenant toutes les cartes en main!**
-
-    N'hésitez pas à expérimenter et à nous poser des questions pendant le développement de votre projet! 💪
-    """)
-
-
-# Le reste continue dans le prochain fichier...
-# (Sections Synthèse à ajouter)

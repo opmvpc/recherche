@@ -447,237 +447,145 @@ def render_home():
         unsafe_allow_html=True,
     )
     st.markdown(
-        '<p class="subtitle">Une application interactive pour maîtriser les techniques de recherche!</p>',
+        '<p class="subtitle">Maîtrise les techniques de recherche textuelle de A à Z!</p>',
         unsafe_allow_html=True,
     )
 
-    # === INTRO VISUELLE ===
-    st.markdown("""
-    ## 🎯 Qu'est-ce que la Recherche Textuelle?
-
-    Imagine que tu as **10,000 recettes de cuisine** et tu cherches **"dessert au chocolat"**.
-    Comment l'ordinateur trouve-t-il les **meilleurs résultats** parmi tous ces documents?
-
-    C'est exactement ce que tu vas apprendre dans cette app! 🚀
-    """)
-
-    # === EXEMPLE CONCRET ===
+    # === INTRO COURTE ===
     st.info("""
-    **💡 Exemple Concret:**
+    **🎯 Mission:** Apprendre comment les moteurs de recherche trouvent les meilleurs résultats parmi des milliers de documents.
 
-    Tu tapes: **"pâtes italiennes fromage"**
-
-    L'algorithme doit:
-    1. Comprendre quels **mots sont importants** (pas "le", "la", "de"...)
-    2. Trouver les documents qui **contiennent ces mots**
-    3. **Classer** les résultats du plus au moins pertinent
-    4. Te montrer les **meilleurs en premier**! 🎯
+    **Exemple:** Tu cherches _"dessert au chocolat"_ → Comment l'algorithme classe-t-il 10,000 recettes? 🍰
     """)
 
     st.markdown("---")
 
-    # === SECTIONS DISPONIBLES (CARDS) ===
+    # === PARCOURS (SIMPLIFIÉ) ===
     st.markdown("## 📚 Parcours d'Apprentissage")
-
-    # Section 1: TF-IDF
-    with st.container():
-        st.markdown("### 📊 Étape 1: TF-IDF - Les Fondamentaux")
-
-        col1, col2 = st.columns([1, 2])
-
-        with col1:
-            st.markdown("""
-            **Niveau:** 🟢 Débutant
-            **Durée:** 15-20 min
-            **Concepts:** 5
-            """)
-
-        with col2:
-            st.markdown("""
-            **Term Frequency - Inverse Document Frequency**
-
-            La technique **classique** de recherche textuelle. Tu apprendras:
-            - ✅ Pourquoi compter les mots ne suffit pas
-            - 📐 Comment normaliser les fréquences (TF)
-            - 🔍 Pourquoi les mots rares sont plus importants (IDF)
-            - 🧮 Comment calculer la similarité entre documents
-            - ⚠️ Les limites de cette approche
-            """)
-
-        st.success("💡 **Recommandé:** Commence par TF-IDF pour comprendre les bases!")
-
-    st.markdown("")
-
-    # Section 2: BM25
-    with st.container():
-        st.markdown("### 🎯 Étape 2: BM25 - L'Amélioration")
-
-        col1, col2 = st.columns([1, 2])
-
-        with col1:
-            st.markdown("""
-            **Niveau:** 🟡 Intermédiaire
-            **Durée:** 20-25 min
-            **Concepts:** 6
-            """)
-
-        with col2:
-            st.markdown("""
-            **Best Matching 25 - État de l'art**
-
-            Une version **améliorée** de TF-IDF utilisée par les moteurs de recherche pro:
-            - 🚀 Résout les problèmes de TF-IDF
-            - 📈 Saturation intelligente (évite la sur-pondération)
-            - 🎛️ Paramètres ajustables (k1, b) pour tuning
-            - ⚔️ Comparaison directe avec TF-IDF
-            - ✅ Meilleurs résultats en pratique
-            """)
-
-        st.info("🎓 **Prérequis:** Avoir compris TF-IDF avant!")
-
-    st.markdown("")
-
-    # Section 3: Embeddings
-    if EMBEDDINGS_AVAILABLE:
-        with st.container():
-            st.markdown("### 🧠 Étape 3: Embeddings - La Sémantique")
-
-            col1, col2 = st.columns([1, 2])
-
-            with col1:
-                st.markdown("""
-                **Niveau:** 🔴 Avancé
-                **Durée:** 30-40 min
-                **Concepts:** 7
-                """)
-
-            with col2:
-                st.markdown("""
-                **Recherche Sémantique par Réseaux de Neurones**
-
-                La technique **moderne** basée sur l'IA:
-                - 🤖 Comprend le **sens** des mots, pas juste leur présence
-                - 🔄 Trouve des **synonymes** automatiquement
-                - 🎯 Recherche par **concept** plutôt que par mot exact
-                - 🌐 Utilise des modèles pré-entraînés (Sentence-BERT)
-                - 🚀 Combinaison avec BM25 (Hybrid Search)
-                """)
-
-            st.success("🔥 **Bonus:** Compare les 3 techniques côte à côte!")
-
-    else:
-        st.warning("""
-        ### 🧠 Embeddings 🔒
-
-        Section non disponible - dépendances manquantes.
-        Installe `sentence-transformers` pour débloquer cette section!
-
-        ```bash
-        pip install sentence-transformers torch
-        ```
-        """)
-
-    st.markdown("---")
-
-    # === GUIDE D'UTILISATION ===
-    st.markdown("## 🚀 Guide d'Utilisation")
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
         st.markdown("""
-        ### 1️⃣ Navigation
+        ### 📊 TF-IDF
+        **Les Fondamentaux**
 
-        Utilise la **sidebar** (←) pour:
-        - Choisir une section
-        - Sélectionner un dataset
-        - Ajuster les paramètres
+        🟢 Débutant • 15 min
+
+        La technique **classique** pour pondérer l'importance des mots.
+
+        ✅ Fréquences normalisées
+        ✅ Mots rares = plus importants
+        ✅ Similarité cosinus
         """)
 
     with col2:
         st.markdown("""
-        ### 2️⃣ Exploration
+        ### 🎯 BM25
+        **L'Amélioration**
 
-        Dans chaque section:
-        - 📖 **Intro:** Le concept expliqué
-        - 🔢 **Concepts:** Formules détaillées
-        - 🔍 **Recherche:** Teste en live
+        🟡 Intermédiaire • 20 min
+
+        Version **améliorée** utilisée par les moteurs pro.
+
+        ✅ Saturation intelligente
+        ✅ Paramètres ajustables
+        ✅ Meilleurs résultats
         """)
 
     with col3:
-        st.markdown("""
-        ### 3️⃣ Apprentissage
+        if EMBEDDINGS_AVAILABLE:
+            st.markdown("""
+            ### 🧠 Embeddings
+            **IA & Sémantique**
 
-        Profite de:
-        - 📊 Graphiques interactifs
-        - 🎓 Exemples pas-à-pas
-        - ⚔️ Comparaisons entre techniques
-        """)
+            🔴 Avancé • 30 min
+
+            Recherche **moderne** par réseaux de neurones.
+
+            ✅ Comprend le sens
+            ✅ Trouve des synonymes
+            ✅ Hybrid search
+            """)
+        else:
+            st.markdown("""
+            ### 🧠 Embeddings 🔒
+            **IA & Sémantique**
+
+            🔴 Avancé
+
+            Installe les dépendances:
+            ```bash
+            pip install sentence-transformers
+            ```
+            """)
+
+    st.success("💡 **Recommandé:** Suis l'ordre TF-IDF → BM25 → Embeddings → Synthèse")
 
     st.markdown("---")
 
-    # === DATASETS ===
+    # === DATASETS (SIMPLIFIÉ + À JOUR) ===
     st.markdown("## 📦 Datasets Disponibles")
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
 
     with col1:
         st.markdown("""
         ### 🍝 Recettes
+        **50 → 200 docs**
 
-        ~1,000 recettes de cuisine
-
-        **Catégories:**
-        - Italienne, Française
-        - Asiatique, Mexicaine
-        - Desserts, Plats
-
-        **Idéal pour:** Recherches simples
+        Cuisine française, italienne, asiatique, mexicaine
         """)
 
     with col2:
         st.markdown("""
         ### 🎬 Films
+        **50 → 200 docs**
 
-        ~1,000 synopsis de films
-
-        **Catégories:**
-        - Science-fiction, Action
-        - Comédie, Drame
-        - Fantasy, Horreur
-
-        **Idéal pour:** Concepts abstraits
+        Synopsis de films variés (action, comédie, SF)
         """)
 
     with col3:
         st.markdown("""
+        ### 📖 Livres
+        **100 → 801 docs**
+
+        Résumés de livres français (classiques & modernes)
+        """)
+
+    with col4:
+        st.markdown("""
         ### 📚 Wikipedia
+        **100 → 1K docs**
 
-        ~1,000 articles variés
-
-        **Catégories:**
-        - Technologie, Histoire
-        - Science, Sport
-        - Culture, Géographie
-
-        **Idéal pour:** Recherches complexes
+        Articles FR sur tech, histoire, science, sport
         """)
 
     st.markdown("---")
 
-    # === CALL TO ACTION ===
-    st.markdown("""
-    ## 🎓 Prêt à Apprendre?
+    # === GUIDE RAPIDE ===
+    st.markdown("## 🚀 Démarrage Rapide")
 
-    **Parcours recommandé:**
+    col1, col2 = st.columns(2)
 
-    1. 📊 **TF-IDF** → Comprends les bases (15 min)
-    2. 🎯 **BM25** → Découvre les améliorations (20 min)
-    3. 🧠 **Embeddings** → Explore l'IA moderne (30 min)
-    4. 📈 **Synthèse** → Compare tout (10 min)
+    with col1:
+        st.markdown("""
+        **📍 Navigation**
+        - Sidebar (←) → Choix section & dataset
+        - Onglets → Intro, Concepts, Recherche, etc.
+        - Benchmarks → Compare les performances
+        """)
 
-    **Temps total:** ~75 minutes pour maîtriser la recherche textuelle! 🚀
-    """)
+    with col2:
+        st.markdown("""
+        **🎓 Parcours Complet**
+        1. 📊 TF-IDF (15 min)
+        2. 🎯 BM25 (20 min)
+        3. 🧠 Embeddings (30 min)
+        4. 📈 Synthèse (10 min)
+
+        **Total:** ~75 min 🚀
+        """)
 
 
 # ============================================================================

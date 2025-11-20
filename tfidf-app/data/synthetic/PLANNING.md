@@ -91,6 +91,21 @@ But: chaque recette semble venir d’une source différente. Avant de réécrire
   - Parfois inclure juste « comment servir » sans étapes.
   - Parfois un micro récit (souvenir, conseil d’ami, astuce de marché).
   - Parfois un bloc « ingrédients » + rien d’autre (style fiche courte).
+
+## Processus à suivre pour chaque réécriture (recettes)
+1) **Observer** : regarder les 3-5 recettes précédemment écrites pour éviter de reprendre le même format/ton/longueur. Noter mentalement les styles déjà utilisés.
+2) **Tirer des paramètres** :
+   - Choisir au hasard un ton/voix et un contexte/auteur.
+   - Définir une longueur cible (mini / courte / moyenne / longue).
+   - Décider si ingrédients/ustensiles sont listés ou implicites.
+   - Glisser ou non des astuces/variantes/durées.
+   - Décider de la ponctuation d’ouverture (pas systématiquement « X: »).
+3) **Rédiger** en respectant ces paramètres, sans répéter la structure précédente. Si le résultat ressemble trop à une recette précédente, refaire un tirage.
+
+### Exemple rapide
+- Observation: les 2 recettes précédentes étaient en mode télégraphique et blog familial, longueur courte.
+- Tirage: ton « critique gastronomique », contexte « repas de fête », longueur moyenne, pas de listes mais mention d’un accord vin.
+- Rédaction: « Note de dégustation: … » (paragraphe continu), inclure 1-2 phrases sur l’accord (vin blanc sec), pas de puces ni d’ouverture “Ingrédients:”.
 - Longueur variable :
   - Très court (1-2 phrases) / moyen (5-7 lignes) / plus développé (10-12 phrases).
 - Consignes générales :

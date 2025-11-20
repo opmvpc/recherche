@@ -324,13 +324,19 @@ def plot_search_results(results: List[Tuple[int, float]],
     ax.invert_yaxis()
 
     ax.set_xlabel('Score de Similarité', fontsize=12, fontweight='bold')
-    ax.set_xlim(0, 1)
+
+    # Ajuster xlim dynamiquement selon les scores
+    max_score = max(scores) if scores else 1.0
+    ax.set_xlim(0, max_score * 1.15)  # 15% de marge pour les labels
+
     ax.set_title(f'Résultats de recherche pour: "{query}"',
                  fontsize=14, fontweight='bold')
 
     # Ajouter les scores sur les barres
     for i, (bar, score) in enumerate(zip(bars, scores)):
-        ax.text(score + 0.02, i, f'{score:.3f}',
+        # Positionner le texte légèrement à droite de la barre
+        offset = max_score * 0.02  # 2% du max comme offset
+        ax.text(score + offset, i, f'{score:.3f}',
                 va='center', fontsize=10, fontweight='bold')
 
     ax.grid(axis='x', alpha=0.3)

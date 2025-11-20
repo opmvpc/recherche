@@ -27,56 +27,6 @@ from src.visualizations import (
 # HELPER FUNCTION
 # ============================================================================
 
-def render_tab_navigation(tabs_list: list, session_key: str, default_tab: str = None) -> str:
-    """
-    Rend une navigation par tabs avec des boutons stylés
-
-    Args:
-        tabs_list: Liste des noms de tabs
-        session_key: Clé de session state pour tracker la tab active
-        default_tab: Tab par défaut (optionnel)
-
-    Returns:
-        Nom de la tab actuellement sélectionnée
-    """
-    # Initialiser avec la première tab ou default
-    if session_key not in st.session_state:
-        st.session_state[session_key] = default_tab if default_tab else tabs_list[0]
-
-    # Rendre les boutons
-    cols = st.columns(len(tabs_list))
-    for idx, (col, tab_name) in enumerate(zip(cols, tabs_list)):
-        with col:
-            if st.session_state[session_key] == tab_name:
-                # Tab actif - afficher avec style
-                st.markdown(
-                    f"""
-                <div style="
-                    background: linear-gradient(135deg, #1f77b4 0%, #2ca02c 100%);
-                    padding: 12px 20px;
-                    border-radius: 8px;
-                    margin-bottom: 8px;
-                    color: white;
-                    font-weight: bold;
-                    text-align: center;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                ">
-                    {tab_name}
-                </div>
-                """,
-                    unsafe_allow_html=True,
-                )
-            else:
-                # Bouton cliquable
-                if st.button(
-                    tab_name, key=f"{session_key}_{idx}", use_container_width=True
-                ):
-                    st.session_state[session_key] = tab_name
-                    st.rerun()
-
-    return st.session_state[session_key]
-
-
 # ============================================================================
 # TF-IDF SECTION FUNCTIONS
 # ============================================================================
@@ -95,6 +45,9 @@ def render_tfidf_section(
     """Section TF-IDF complète avec tous les onglets"""
 
     st.title("📊 TF-IDF: Term Frequency - Inverse Document Frequency")
+
+    # Import de la fonction de navigation stylée
+    from app import render_tab_navigation
 
     # Sub-navigation avec boutons stylés
     tabs_tfidf = [
@@ -703,6 +656,79 @@ def render_tfidf_concepts(engine, documents_titles):
         """)
 
         st.latex(r"\text{cos}(\theta) = \frac{A \cdot B}{\|A\| \times \|B\|}")
+
+        # Graphique pour visualiser l'angle
+        col_graph, col_exp = st.columns([1, 1])
+
+        with col_graph:
+            import matplotlib.pyplot as plt
+            import numpy as np
+
+            # Créer deux vecteurs exemple
+            vec_A = np.array([3, 4])
+            vec_B = np.array([4, 2])
+
+            # Calculer l'angle
+            cos_angle = np.dot(vec_A, vec_B) / (np.linalg.norm(vec_A) * np.linalg.norm(vec_B))
+            angle_deg = np.degrees(np.arccos(cos_angle))
+
+            fig, ax = plt.subplots(figsize=(5, 5))
+
+            # Origine
+            origin = np.array([0, 0])
+
+            # Dessiner les vecteurs
+            ax.quiver(*origin, *vec_A, angles='xy', scale_units='xy', scale=1,
+                     color='#1f77b4', width=0.01, label=f'Vecteur A (Doc)', linewidth=2)
+            ax.quiver(*origin, *vec_B, angles='xy', scale_units='xy', scale=1,
+                     color='#2ca02c', width=0.01, label=f'Vecteur B (Query)', linewidth=2)
+
+            # Dessiner l'arc de l'angle
+            angle_arc = np.linspace(0, np.arctan2(vec_B[1], vec_B[0]), 50)
+            radius = 1.5
+            ax.plot(radius * np.cos(angle_arc), radius * np.sin(angle_arc),
+                   'r--', linewidth=2, label=f'Angle θ = {angle_deg:.1f}°')
+
+            # Annotations
+            ax.text(vec_A[0]/2, vec_A[1]/2 + 0.3, 'A', fontsize=14, fontweight='bold', color='#1f77b4')
+            ax.text(vec_B[0]/2 + 0.3, vec_B[1]/2, 'B', fontsize=14, fontweight='bold', color='#2ca02c')
+            ax.text(1.0, 0.5, f'θ', fontsize=16, fontweight='bold', color='red')
+
+            # Configuration
+            ax.set_xlim(-1, 5)
+            ax.set_ylim(-1, 5)
+            ax.set_aspect('equal')
+            ax.grid(True, alpha=0.3)
+            ax.axhline(y=0, color='k', linewidth=0.5)
+            ax.axvline(x=0, color='k', linewidth=0.5)
+            ax.legend(loc='upper left', fontsize=9)
+            ax.set_title('Similarité Cosinus = Angle entre Vecteurs', fontsize=11, fontweight='bold')
+            ax.set_xlabel('Dimension 1', fontsize=10)
+            ax.set_ylabel('Dimension 2', fontsize=10)
+
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close()
+
+        with col_exp:
+            st.markdown(f"""
+            **📊 Exemple Visuel:**
+
+            - **Vecteur A** (bleu) = Document
+            - **Vecteur B** (vert) = Query
+            - **Angle θ** (rouge) = {angle_deg:.1f}°
+
+            **Calcul:**
+            - A · B = {np.dot(vec_A, vec_B):.1f}
+            - ||A|| = {np.linalg.norm(vec_A):.2f}
+            - ||B|| = {np.linalg.norm(vec_B):.2f}
+            - cos(θ) = **{cos_angle:.3f}**
+
+            **Interprétation:**
+            - Plus l'angle est **petit**
+            - Plus les vecteurs sont **proches**
+            - Plus les documents sont **similaires**! 🎯
+            """)
 
         st.markdown("""
         **Composantes:**

@@ -27,58 +27,6 @@ from src.visualizations import (
 # ============================================================================
 
 
-def render_tab_navigation(
-    tabs_list: list, session_key: str, default_tab: str = None
-) -> str:
-    """
-    Rend une navigation par tabs avec des boutons stylés
-
-    Args:
-        tabs_list: Liste des noms de tabs
-        session_key: Clé de session state pour tracker la tab active
-        default_tab: Tab par défaut (optionnel)
-
-    Returns:
-        Nom de la tab actuellement sélectionnée
-    """
-    # Initialiser avec la première tab ou default
-    if session_key not in st.session_state:
-        st.session_state[session_key] = default_tab if default_tab else tabs_list[0]
-
-    # Rendre les boutons
-    cols = st.columns(len(tabs_list))
-    for idx, (col, tab_name) in enumerate(zip(cols, tabs_list)):
-        with col:
-            if st.session_state[session_key] == tab_name:
-                # Tab actif - afficher avec style
-                st.markdown(
-                    f"""
-                <div style="
-                    background: linear-gradient(135deg, #1f77b4 0%, #2ca02c 100%);
-                    padding: 12px 20px;
-                    border-radius: 8px;
-                    margin-bottom: 8px;
-                    color: white;
-                    font-weight: bold;
-                    text-align: center;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                ">
-                    {tab_name}
-                </div>
-                """,
-                    unsafe_allow_html=True,
-                )
-            else:
-                # Bouton cliquable
-                if st.button(
-                    tab_name, key=f"{session_key}_{idx}", use_container_width=True
-                ):
-                    st.session_state[session_key] = tab_name
-                    st.rerun()
-
-    return st.session_state[session_key]
-
-
 # ============================================================================
 # BM25 SECTION FUNCTIONS
 # ============================================================================
@@ -95,6 +43,9 @@ def render_bm25_section(
     """Section BM25 complète"""
 
     st.title("🎯 BM25: Best Matching 25 - TF-IDF Amélioré")
+
+    # Import de la fonction de navigation stylée
+    from app import render_tab_navigation
 
     # Sub-navigation avec boutons stylés
     tabs_bm25 = [
@@ -525,6 +476,154 @@ def render_bm25_concepts(documents_texts, remove_stopwords):
         - Meilleure généralisation
         """)
 
+        # === GRAPHIQUE COMPARATIF IDF ===
+        st.divider()
+        st.markdown("### 📊 Visualisation: Impact du Smoothing")
+
+        col_graph, col_analysis = st.columns([3, 2])
+
+        with col_graph:
+            import matplotlib.pyplot as plt
+
+            fig, ax = plt.subplots(figsize=(10, 6))
+
+            # Nombre total de documents
+            N = 1000
+
+            # Gamme de n(q): de 1 à N (nombre de docs contenant le terme)
+            n_values = np.arange(1, N + 1)
+
+            # Calcul IDF TF-IDF
+            idf_tfidf = np.log(N / n_values)
+
+            # Calcul IDF BM25 (avec smoothing)
+            idf_bm25 = np.log((N - n_values + 0.5) / (n_values + 0.5))
+
+            # Tracer les courbes
+            ax.plot(
+                n_values,
+                idf_tfidf,
+                "b-",
+                linewidth=2.5,
+                label="IDF TF-IDF (classique)",
+                alpha=0.8,
+            )
+            ax.plot(
+                n_values,
+                idf_bm25,
+                "r-",
+                linewidth=2.5,
+                label="IDF BM25 (avec smoothing +0.5)",
+                alpha=0.8,
+            )
+
+            # Zones d'intérêt
+            # Mots très rares (n < 10)
+            ax.axvspan(0, 10, alpha=0.1, color="red", label="Mots très rares")
+            # Mots communs (n > 800)
+            ax.axvspan(800, N, alpha=0.1, color="green", label="Mots très communs")
+
+            # Annotations pour des exemples
+            examples_n = [5, 50, 300, 950]
+            examples_labels = ["blockchain", "python", "cuisine", "le"]
+
+            for n, label in zip(examples_n, examples_labels):
+                idf_tf = np.log(N / n)
+                idf_bm = np.log((N - n + 0.5) / (n + 0.5))
+
+                # Marquer sur la courbe TF-IDF
+                ax.scatter(
+                    [n],
+                    [idf_tf],
+                    color="blue",
+                    s=80,
+                    zorder=5,
+                    edgecolor="black",
+                    linewidth=1.5,
+                )
+                ax.text(
+                    n,
+                    idf_tf + 0.3,
+                    f'"{label}"',
+                    fontsize=9,
+                    ha="center",
+                    color="blue",
+                    fontweight="bold",
+                )
+
+                # Marquer sur la courbe BM25
+                ax.scatter(
+                    [n],
+                    [idf_bm],
+                    color="red",
+                    s=80,
+                    zorder=5,
+                    edgecolor="black",
+                    linewidth=1.5,
+                )
+
+            ax.set_xlabel(
+                "Nombre de documents contenant le terme n(q)",
+                fontsize=12,
+                fontweight="bold",
+            )
+            ax.set_ylabel("Score IDF", fontsize=12, fontweight="bold")
+            ax.set_title(
+                "Comparaison IDF: TF-IDF vs BM25 (Corpus de 1000 docs)",
+                fontsize=13,
+                fontweight="bold",
+                pad=15,
+            )
+
+            ax.legend(fontsize=10, loc="upper right")
+            ax.grid(True, alpha=0.3)
+            ax.set_xlim(0, N)
+            ax.set_ylim(-1, 6)
+
+            # Ligne horizontale à y=0
+            ax.axhline(y=0, color="black", linestyle="--", alpha=0.3, linewidth=1)
+
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close()
+
+        with col_analysis:
+            st.markdown("""
+            ### 🔍 Analyse du Graphique
+
+            **Courbe bleue (TF-IDF):**
+            - Décroît rapidement pour les mots rares
+            - **Problème:** Peut devenir négatif si n > N/2 ⚠️
+            - Pas de stabilisation
+
+            **Courbe rouge (BM25):**
+            - Forme similaire mais **plus stable**
+            - Le **+0.5** lisse la courbe
+            - Reste toujours positif 💚
+            - Évite les valeurs extrêmes
+
+            **Zones colorées:**
+            - 🔴 **Rouge:** Mots très rares (< 10 docs)
+              - IDF élevé (~5-6)
+              - Forte différenciation
+
+            - 🟢 **Vert:** Mots très communs (> 800 docs)
+              - IDF proche de 0
+              - Faible importance
+
+            **💡 Points clés:**
+
+            Les deux formules donnent des résultats **très similaires** pour la plupart des mots, mais BM25 est plus robuste aux cas extrêmes!
+
+            **Exemple "blockchain" (n=5):**
+            - TF-IDF: ~5.30
+            - BM25: ~5.30
+            - ✅ Quasi identique
+
+            **Avantage BM25:**
+            Le smoothing évite les comportements instables pour les mots absents ou extrêmement rares.
+            """)
+
     # === SATURATION DU TF ===
     with st.expander("🎛️ **Composant #2: Saturation du TF (Paramètre k1)**"):
         st.markdown("""
@@ -593,32 +692,87 @@ def render_bm25_concepts(documents_texts, remove_stopwords):
         - Croissance linéaire sans limite
         """)
 
-        # Graphique en colonnes
-        col_g1, col_g2 = st.columns(2)
+        # Graphique de saturation
+        col_g1, col_g2 = st.columns([3, 2])
 
         with col_g1:
-            # Note: Visualisation à implémenter
-            st.info("📊 Graphique de saturation avec k1 variable (à implémenter)")
+            import matplotlib.pyplot as plt
+
+            fig, ax = plt.subplots(figsize=(8, 5))
+
+            # Fréquences de 0 à 100
+            freqs = np.linspace(0, 100, 200)
+
+            # TF-IDF (linéaire)
+            tf_tfidf = freqs
+            ax.plot(
+                freqs,
+                tf_tfidf,
+                "r-",
+                linewidth=2,
+                label="TF-IDF (linéaire)",
+                linestyle="--",
+                alpha=0.7,
+            )
+
+            # BM25 avec différents k1
+            k1_vals = [
+                (0.5, "#3498db"),
+                (1.2, "#e74c3c"),
+                (1.5, "#2ecc71"),
+                (2.0, "#f39c12"),
+            ]
+            for k1, color in k1_vals:
+                tf_bm25 = (freqs * (k1 + 1)) / (freqs + k1)
+                label = f"BM25 (k1={k1})" + (" ⭐" if k1 == 1.5 else "")
+                ax.plot(
+                    freqs,
+                    tf_bm25,
+                    color=color,
+                    linewidth=2.5 if k1 == 1.5 else 2,
+                    label=label,
+                )
+
+            ax.set_xlabel("Nombre d'occurrences (f)", fontsize=11)
+            ax.set_ylabel("Score TF", fontsize=11)
+            ax.set_title(
+                "Effet de Saturation: TF-IDF vs BM25", fontsize=12, fontweight="bold"
+            )
+            ax.legend(fontsize=9, loc="lower right")
+            ax.grid(True, alpha=0.3)
+            ax.set_xlim(0, 100)
+            ax.set_ylim(0, 20)
+
+            # Annotations
+            ax.axhline(y=1.5, color="green", linestyle=":", alpha=0.5, linewidth=1)
+            ax.text(85, 1.7, "Plateau k1=1.5", fontsize=9, color="green")
+
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close()
 
         with col_g2:
             st.markdown("""
             ### 📈 Analyse du Graphique
 
-            **Axe X:** Nombre d'occurrences du mot
+            **Axe X:** Nombre d'occurrences
             **Axe Y:** Score TF résultant
 
-            **Ligne rouge (TF-IDF):**
-            - Monte indéfiniment
-            - 100 occ = 100× le score
-            - **Problématique!** ❌
+            **Ligne rouge pointillée (TF-IDF):**
+            - Monte indéfiniment ⬆️
+            - 100 occ = score de 100
+            - **Problème: spam!** ❌
 
-            **Courbes BM25:**
-            - **Bleue (k1=0.5)**: Plateau à ~1.0
-            - **Orange (k1=1.2)**: Plateau à ~1.2
-            - **Verte (k1=1.5)**: Plateau à ~1.5 ⭐
-            - **Rouge (k1=2.0)**: Plateau à ~2.0
+            **Courbes BM25 (saturées):**
+            - **Bleue (k1=0.5):** Plateau ~1.0
+            - **Rouge (k1=1.2):** Plateau ~1.2
+            - **Verte (k1=1.5) ⭐:** Plateau ~1.5
+            - **Orange (k1=2.0):** Plateau ~2.0
 
-            **Conseil:**
+            **💡 Observation:**
+            Après 20-30 occurrences, les courbes BM25 **plafonnent** → évite la sur-pondération!
+
+            **🎯 Recommandation:**
             k1=1.5 est le standard pour la plupart des corpus!
             """)
 
@@ -698,13 +852,97 @@ def render_bm25_concepts(documents_texts, remove_stopwords):
         # Créer un mini corpus pour calculer avgdl
         bm25_demo = BM25Engine(documents_texts[:10], remove_stopwords=remove_stopwords)
 
-        col_g1, col_g2 = st.columns(2)
+        col_g1, col_g2 = st.columns([3, 2])
 
         with col_g1:
-            # Note: Visualisation à implémenter
-            st.info(
-                f"📊 Graphique de normalisation de longueur (avgdl={bm25_demo.avgdl:.1f}) - À implémenter"
+            import matplotlib.pyplot as plt
+
+            fig, ax = plt.subplots(figsize=(8, 5))
+
+            # Longueurs de documents de 10 à 500 mots
+            doc_lengths = np.linspace(10, 500, 200)
+            avgdl_val = bm25_demo.avgdl
+
+            # Différentes valeurs de b
+            b_vals = [
+                (0.0, "#95a5a6"),
+                (0.5, "#3498db"),
+                (0.75, "#2ecc71"),
+                (1.0, "#e74c3c"),
+            ]
+
+            for b, color in b_vals:
+                norm_factors = 1 - b + b * (doc_lengths / avgdl_val)
+                label = f"b={b}" + (" ⭐" if b == 0.75 else "")
+                ax.plot(
+                    doc_lengths,
+                    norm_factors,
+                    color=color,
+                    linewidth=2.5 if b == 0.75 else 2,
+                    label=label,
+                )
+
+            # Ligne de référence (facteur = 1)
+            ax.axhline(
+                y=1.0,
+                color="black",
+                linestyle="--",
+                alpha=0.5,
+                linewidth=1,
+                label="Facteur neutre (1.0)",
             )
+
+            # Ligne verticale à avgdl
+            ax.axvline(
+                x=avgdl_val,
+                color="orange",
+                linestyle=":",
+                alpha=0.7,
+                linewidth=2,
+                label=f"avgdl ({avgdl_val:.0f} mots)",
+            )
+
+            ax.set_xlabel("Longueur du document (mots)", fontsize=11)
+            ax.set_ylabel("Facteur de normalisation", fontsize=11)
+            ax.set_title(
+                "Effet de Normalisation par Longueur (Paramètre b)",
+                fontsize=12,
+                fontweight="bold",
+            )
+            ax.legend(fontsize=9, loc="upper left")
+            ax.grid(True, alpha=0.3)
+            ax.set_xlim(10, 500)
+            ax.set_ylim(0, 5)
+
+            # Annotations
+            ax.text(
+                avgdl_val + 20,
+                0.2,
+                "Longueur moyenne",
+                fontsize=9,
+                color="orange",
+                rotation=0,
+            )
+            ax.text(
+                400,
+                0.5,
+                "← Docs courts\n   (boost)",
+                fontsize=8,
+                color="green",
+                ha="right",
+            )
+            ax.text(
+                400,
+                4.5,
+                "← Docs longs\n   (pénalité)",
+                fontsize=8,
+                color="red",
+                ha="right",
+            )
+
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close()
 
         with col_g2:
             st.markdown(f"""
@@ -713,18 +951,28 @@ def render_bm25_concepts(documents_texts, remove_stopwords):
             **Corpus actuel:**
             - avgdl = {bm25_demo.avgdl:.1f} mots
 
-            **Ligne horizontale (b=0):**
+            **Ligne grise (b=0):**
             - Facteur = 1.0 constant
-            - Aucune pénalité
+            - **Aucune pénalité**
 
-            **Courbes montantes (b > 0):**
-            - Plus b est élevé, plus la pente est forte
-            - b=0.75 (standard) = compromis
+            **Ligne bleue (b=0.5):**
+            - Pénalité modérée
 
-            **Conseil pratique:**
-            - **b=0.5** si corpus homogène (longueurs similaires)
-            - **b=0.75** standard (recommandé) ⭐
-            - **b=1.0** si beaucoup de spam/docs longs
+            **Ligne verte (b=0.75) ⭐:**
+            - Standard recommandé
+            - Équilibre pénalité/boost
+
+            **Ligne rouge (b=1.0):**
+            - Pénalité maximale
+            - Comme TF-IDF classique
+
+            **💡 Observation:**
+            - **Docs < avgdl** → boost (facteur < 1)
+            - **Docs > avgdl** → pénalité (facteur > 1)
+            - Plus b est élevé, plus l'effet est fort!
+
+            **🎯 Recommandation:**
+            b=0.75 pour la plupart des corpus!
             """)
 
     # === FORMULE COMPLÈTE ===
@@ -927,7 +1175,7 @@ def render_bm25_search(
                 # === VISUALISATION RÉSULTATS ===
                 st.markdown("### 📊 Visualisation des Scores")
 
-                col_g1, col_g2 = st.columns(2)
+                col_g1, col_g2 = st.columns([3, 2])  # Plus d'espace pour le graphique
 
                 with col_g1:
                     fig_results = plot_search_results(results, documents_titles, query)
@@ -1045,19 +1293,194 @@ def render_bm25_exploration(documents_texts, documents_titles, remove_stopwords)
     st.markdown("""
     ### 🎛️ Laboratoire de Tuning BM25
 
-    Explore l'impact des paramètres k1 et b sur les scores!
+    Explore l'impact des paramètres **k1** et **b** sur les scores!
+
+    Cette heatmap montre le **score moyen** des top 5 résultats pour différentes combinaisons de paramètres.
+    Plus la zone est rouge/chaude, meilleures sont les séparations de scores!
     """)
 
     test_query = st.text_input(
         "Query de test:",
-        value="recette cuisine",
+        value="recette italienne",
         key="bm25_tuning_query",
         help='💡 Exemples: "plat italien" | "cuisine asiatique" | "dessert chocolat"',
     )
 
     if test_query:
-        # Note: Visualisation à implémenter
-        st.info("📊 Heatmap de l'espace des paramètres (k1, b) - À implémenter")
+        with st.spinner(
+            "🔥 Calcul de la heatmap pour toutes les combinaisons de paramètres..."
+        ):
+            # Grille de valeurs à tester
+            k1_values = np.linspace(0.5, 3.0, 8)  # 8 valeurs de k1
+            b_values = np.linspace(0.0, 1.0, 8)  # 8 valeurs de b
+
+            # Matrice pour stocker les scores moyens
+            score_matrix = np.zeros((len(b_values), len(k1_values)))
+
+            # Calculer les scores pour chaque combinaison
+            for i, b_val in enumerate(b_values):
+                for j, k1_val in enumerate(k1_values):
+                    # Créer un engine BM25 avec ces paramètres
+                    engine = BM25Engine(
+                        documents_texts[:100],  # Limiter à 100 docs pour la rapidité
+                        k1=k1_val,
+                        b=b_val,
+                        remove_stopwords=remove_stopwords,
+                    )
+
+                    # Rechercher
+                    results = engine.search(test_query, top_k=5)
+
+                    # Score moyen des top 5
+                    if results:
+                        avg_score = np.mean([score for _, score in results])
+                        score_matrix[i, j] = avg_score
+                    else:
+                        score_matrix[i, j] = 0.0
+
+        # === VISUALISATION HEATMAP ===
+        col_heatmap, col_analysis = st.columns([3, 2])
+
+        with col_heatmap:
+            import matplotlib.pyplot as plt
+
+            fig, ax = plt.subplots(figsize=(10, 8))
+
+            # Heatmap avec annotations
+            im = ax.imshow(score_matrix, cmap="YlOrRd", aspect="auto")
+
+            # Axes
+            ax.set_xticks(np.arange(len(k1_values)))
+            ax.set_yticks(np.arange(len(b_values)))
+            ax.set_xticklabels([f"{k1:.2f}" for k1 in k1_values], fontsize=9)
+            ax.set_yticklabels([f"{b:.2f}" for b in b_values], fontsize=9)
+
+            # Labels
+            ax.set_xlabel("k1 (Saturation du TF)", fontsize=12, fontweight="bold")
+            ax.set_ylabel(
+                "b (Normalisation de longueur)", fontsize=12, fontweight="bold"
+            )
+            ax.set_title(
+                f'Heatmap BM25: Impact de k1 et b\nQuery: "{test_query}"',
+                fontsize=13,
+                fontweight="bold",
+                pad=15,
+            )
+
+            # Annotations des valeurs
+            for i in range(len(b_values)):
+                for j in range(len(k1_values)):
+                    ax.text(
+                        j,
+                        i,
+                        f"{score_matrix[i, j]:.2f}",
+                        ha="center",
+                        va="center",
+                        color="black",
+                        fontsize=8,
+                    )
+
+            # Marquer les valeurs standards (k1=1.5, b=0.75)
+            k1_std_idx = np.argmin(np.abs(k1_values - 1.5))
+            b_std_idx = np.argmin(np.abs(b_values - 0.75))
+            ax.add_patch(
+                plt.Rectangle(
+                    (k1_std_idx - 0.5, b_std_idx - 0.5),
+                    1,
+                    1,
+                    fill=False,
+                    edgecolor="lime",
+                    linewidth=3,
+                )
+            )
+            ax.text(
+                k1_std_idx,
+                b_std_idx - 0.7,
+                "⭐",
+                ha="center",
+                fontsize=16,
+                color="lime",
+            )
+
+            # Colorbar
+            cbar = plt.colorbar(im, ax=ax)
+            cbar.set_label("Score BM25 moyen (top 5)", fontsize=10)
+
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close()
+
+        with col_analysis:
+            st.markdown("### 🔍 Analyse de la Heatmap")
+
+            # Trouver les meilleurs paramètres
+            best_idx = np.unravel_index(np.argmax(score_matrix), score_matrix.shape)
+            best_b = b_values[best_idx[0]]
+            best_k1 = k1_values[best_idx[1]]
+            best_score = score_matrix[best_idx]
+
+            # Valeurs standard
+            std_score = score_matrix[b_std_idx, k1_std_idx]
+
+            st.markdown(f"""
+            **🏆 Meilleure combinaison:**
+            - k1 = **{best_k1:.2f}**
+            - b = **{best_b:.2f}**
+            - Score moyen = **{best_score:.3f}**
+
+            **⭐ Valeurs standard (carré vert):**
+            - k1 = **{k1_values[k1_std_idx]:.2f}**
+            - b = **{b_values[b_std_idx]:.2f}**
+            - Score moyen = **{std_score:.3f}**
+
+            ---
+
+            **📊 Observations:**
+            """)
+
+            # Analyses automatiques
+            if best_score > std_score * 1.1:
+                st.success(f"""
+                ✅ **Optimisation possible!**
+
+                Les valeurs optimales donnent {((best_score / std_score - 1) * 100):.1f}% de meilleure séparation que les valeurs standard.
+                """)
+            else:
+                st.info("""
+                💡 **Standard = Optimal**
+
+                Les valeurs par défaut (k1=1.5, b=0.75) fonctionnent déjà très bien pour cette query!
+                """)
+
+            # Analyse par axe
+            avg_by_k1 = np.mean(score_matrix, axis=0)
+            avg_by_b = np.mean(score_matrix, axis=1)
+
+            best_k1_overall = k1_values[np.argmax(avg_by_k1)]
+            best_b_overall = b_values[np.argmax(avg_by_b)]
+
+            st.markdown(f"""
+            **🎯 Recommandations:**
+
+            **Axe k1 (saturation):**
+            - Valeur optimale moyenne: **{best_k1_overall:.2f}**
+            - {"✅ Saturation faible (< 1.0)" if best_k1_overall < 1.0 else "✅ Saturation modérée (1.0-2.0)" if best_k1_overall < 2.0 else "⚠️ Saturation élevée (> 2.0)"}
+
+            **Axe b (normalisation):**
+            - Valeur optimale moyenne: **{best_b_overall:.2f}**
+            - {"✅ Pas de normalisation (< 0.3)" if best_b_overall < 0.3 else "✅ Normalisation modérée (0.3-0.8)" if best_b_overall < 0.8 else "⚠️ Forte normalisation (> 0.8)"}
+            """)
+
+            st.warning("""
+            ⚠️ **Note:**
+
+            Ces résultats dépendent de:
+            - La query testée
+            - Le corpus utilisé
+            - La longueur des documents
+
+            Teste plusieurs queries pour trouver les meilleurs paramètres globaux!
+            """)
 
 
 def render_bm25_stepbystep(documents_texts, documents_titles, remove_stopwords):
@@ -1129,7 +1552,7 @@ def render_bm25_stepbystep(documents_texts, documents_titles, remove_stopwords):
         )
 
         # Preprocessing de la query
-        from src.preprocessing import preprocess_text
+        from src.bm25_engine import preprocess_text
 
         query_words = preprocess_text(query, remove_stopwords=remove_stopwords)
 
@@ -1193,9 +1616,8 @@ def render_bm25_stepbystep(documents_texts, documents_titles, remove_stopwords):
             # Calculer IDF pour chaque mot de la query
             idf_data = []
             for word in query_words:
-                if word in mini_bm25.word_to_idx:
-                    idx = mini_bm25.word_to_idx[word]
-                    n_t = mini_bm25.doc_count[idx]
+                if word in mini_bm25.vocabulary:
+                    n_t = mini_bm25.doc_freqs.get(word, 0)
                     idf = np.log((mini_bm25.N - n_t + 0.5) / (n_t + 0.5))
 
                     idf_data.append(
@@ -1368,11 +1790,9 @@ def render_bm25_stepbystep(documents_texts, documents_titles, remove_stopwords):
                 details = []
 
                 for word in query_words:
-                    if word in mini_bm25.word_to_idx:
-                        idx = mini_bm25.word_to_idx[word]
-
+                    if word in mini_bm25.vocabulary:
                         # IDF
-                        n_t = mini_bm25.doc_count[idx]
+                        n_t = mini_bm25.doc_freqs.get(word, 0)
                         idf = np.log((mini_bm25.N - n_t + 0.5) / (n_t + 0.5))
 
                         # TF saturé
